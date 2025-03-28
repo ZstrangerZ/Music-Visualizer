@@ -1,0 +1,1127 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoundWave AI - Advanced Music Visualizer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="https://ico.buildglarecontent.com/music-visualizer/favicon.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+              },
+              accent: {
+                500: '#8b5cf6',
+                600: '#7c3aed',
+                700: '#6d28d9',
+              }
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'bounce-slow': 'bounce 3s infinite',
+              'float': 'float 6s ease-in-out infinite',
+            },
+            keyframes: {
+              float: {
+                '0%, 100%': { transform: 'translateY(0)' },
+                '50%': { transform: 'translateY(-20px)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        scroll-behavior: smooth;
+      }
+      
+      .gradient-text {
+        background-clip: text;
+        -webkit-background-clip: text;
+        color: transparent;
+        background-image: linear-gradient(to right, #7dd3fc, #8b5cf6);
+      }
+      
+      .hero-bg {
+        background: radial-gradient(circle at 50% 50%, rgba(14, 165, 233, 0.15), rgba(139, 92, 246, 0.15), rgba(0, 0, 0, 0));
+      }
+      
+      @keyframes wave {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-10px); }
+        100% { transform: translateY(0); }
+      }
+      
+      .wave-animation > div {
+        animation: wave 2s infinite;
+      }
+      
+      .wave-animation > div:nth-child(1) { animation-delay: 0s; }
+      .wave-animation > div:nth-child(2) { animation-delay: 0.2s; }
+      .wave-animation > div:nth-child(3) { animation-delay: 0.4s; }
+      .wave-animation > div:nth-child(4) { animation-delay: 0.6s; }
+      .wave-animation > div:nth-child(5) { animation-delay: 0.8s; }
+      
+      .feature-card {
+        transition: all 0.3s ease;
+      }
+      
+      .feature-card:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+      }
+      
+      .visualizer-demo {
+        position: relative;
+        overflow: hidden;
+        border-radius: 1rem;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      }
+      
+      .visualizer-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(to bottom, rgba(0,0,0,0) 70%, rgba(0,0,0,0.8) 100%);
+      }
+      
+      .visualizer-controls {
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        padding: 1.5rem;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      
+      .testimonial-card {
+        transition: all 0.3s ease;
+      }
+      
+      .testimonial-card:hover {
+        transform: scale(1.03);
+      }
+      
+      .cta-section {
+        background: linear-gradient(135deg, #075985 0%, #6d28d9 100%);
+      }
+      
+      .blob {
+        position: absolute;
+        border-radius: 50%;
+        filter: blur(60px);
+        z-index: -1;
+        opacity: 0.4;
+      }
+      
+      @keyframes pulse-slow {
+        0%, 100% {
+          opacity: 0.4;
+        }
+        50% {
+          opacity: 0.6;
+        }
+      }
+      
+      .blob-animation {
+        animation: pulse-slow 8s ease-in-out infinite;
+      }
+    </style>
+  <script>
+const originalConsoleError = console.error;
+const version = Math.random().toString(36).slice(-8);
+console.error = function(...args) {
+  if (!args || args.length === 0) return;
+  originalConsoleError.apply(console, args);
+  
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: args.join(' ')
+      }, '*');
+  }
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: 'Unhandled Promise Rejection: ' + event.reason
+      }, '*');
+  }
+});
+
+window.addEventListener('error', function(event) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: event.message
+      }, '*');
+  }
+});
+
+// refresh the error status
+window.addEventListener('load', function() {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: null
+      }, '*');
+  }
+});
+</script>
+</head>
+  <body class="min-h-screen bg-black text-white">
+    
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
+  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+            <div class="w-2 h-4 bg-white rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      <a href="/" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</a>
+    </div>
+    
+    <nav class="hidden md:flex items-center space-x-8">
+      <a href="index.html" class="text-white hover:text-primary-300 transition-colors">Home</a>
+      <a href="visualizer.html" class="text-white hover:text-primary-300 transition-colors">Visualizer</a>
+      <a href="upload.html" class="text-white hover:text-primary-300 transition-colors">Upload Music</a>
+      <a href="#" class="text-white hover:text-primary-300 transition-colors">About</a>
+    </nav>
+    
+    <div class="flex items-center space-x-4">
+      <a href="upload.html" class="hidden md:block px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium">
+        Get Started
+      </a>
+      <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Mobile Navigation (Hidden by default) -->
+  <div class="md:hidden hidden bg-gray-900 bg-opacity-95" id="mobile-menu">
+    <div class="container mx-auto px-4 py-4">
+      <nav class="flex flex-col space-y-4">
+        <a href="index.html" class="text-white hover:text-primary-300 transition-colors py-2">Home</a>
+        <a href="visualizer.html" class="text-white hover:text-primary-300 transition-colors py-2">Visualizer</a>
+        <a href="upload.html" class="text-white hover:text-primary-300 transition-colors py-2">Upload Music</a>
+        <a href="#" class="text-white hover:text-primary-300 transition-colors py-2">About</a>
+        <a href="upload.html" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium text-center">
+          Get Started
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle
+  document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+      mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+  });
+</script>
+
+    
+    <!-- Hero Section -->
+    <section class="relative pt-32 pb-20 md:pt-40 md:pb-32 overflow-hidden hero-bg">
+      <!-- Decorative blobs -->
+      <div class="blob blob-animation bg-primary-600 w-64 h-64 top-20 left-10 md:left-40"></div>
+      <div class="blob blob-animation bg-accent-600 w-80 h-80 top-40 right-0 md:right-40"></div>
+      
+      <div class="container mx-auto px-4 relative z-10">
+        <div class="flex flex-col lg:flex-row items-center justify-between gap-12">
+          <div class="lg:w-1/2">
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight">
+              Transform Your Music with <span class="gradient-text">AI-Powered Visualizations</span>
+            </h1>
+            <p class="text-xl text-gray-300 mb-8 max-w-lg">
+              Experience your favorite songs in a whole new dimension with our advanced AI technology that creates stunning real-time visual experiences synchronized to your music.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+              <a href="upload.html" class="px-8 py-3 bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 rounded-full text-white font-medium text-lg text-center transition-all transform hover:-translate-y-1">
+                Get Started
+              </a>
+              <a href="#how-it-works" class="px-8 py-3 bg-gray-800 hover:bg-gray-700 rounded-full text-white font-medium text-lg text-center transition-all">
+                Learn More
+              </a>
+            </div>
+            
+            <div class="mt-12 flex items-center space-x-6">
+              <div class="flex -space-x-2">
+                <img class="w-10 h-10 rounded-full border-2 border-gray-900" src="https://picsum.photos/seed/user1/200" alt="User">
+                <img class="w-10 h-10 rounded-full border-2 border-gray-900" src="https://picsum.photos/seed/user2/200" alt="User">
+                <img class="w-10 h-10 rounded-full border-2 border-gray-900" src="https://picsum.photos/seed/user3/200" alt="User">
+                <div class="w-10 h-10 rounded-full border-2 border-gray-900 bg-gray-800 flex items-center justify-center text-xs font-medium">
+                  +2k
+                </div>
+              </div>
+              <div class="text-sm text-gray-300">
+                <div class="font-semibold">Trusted by thousands</div>
+                <div class="flex items-center mt-1">
+                  <div class="flex">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                  </div>
+                  <span class="ml-1">4.9/5</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div class="lg:w-1/2 relative">
+            <div class="visualizer-demo">
+              <img src="https://picsum.photos/seed/music-visualizer/1200/800" alt="Music Visualizer Demo" class="w-full rounded-xl">
+              <div class="visualizer-overlay"></div>
+              <div class="visualizer-controls">
+                <div class="flex items-center space-x-4">
+                  <button class="w-10 h-10 rounded-full bg-white bg-opacity-20 backdrop-blur-md flex items-center justify-center hover:bg-opacity-30 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0019 16V8a1 1 0 00-1.6-.8l-5.333 4zM4.066 11.2a1 1 0 000 1.6l5.334 4A1 1 0 0011 16V8a1 1 0 00-1.6-.8l-5.334 4z" />
+                    </svg>
+                  </button>
+                  <button class="w-14 h-14 rounded-full bg-white flex items-center justify-center hover:bg-gray-100 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-black" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    </svg>
+                  </button>
+                  <button class="w-10 h-10 rounded-full bg-white bg-opacity-20 backdrop-blur-md flex items-center justify-center hover:bg-opacity-30 transition-all">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11.933 12.8a1 1 0 000-1.6L6.6 7.2A1 1 0 005 8v8a1 1 0 001.6.8l5.333-4zM19.933 12.8a1 1 0 000-1.6l-5.333-4A1 1 0 0013 8v8a1 1 0 001.6.8l5.333-4z" />
+                    </svg>
+                  </button>
+                </div>
+              </div>
+              
+              <!-- Animated equalizer bars -->
+              <div class="absolute bottom-16 left-0 right-0 flex justify-center">
+                <div class="wave-animation flex items-end space-x-1">
+                  <div class="w-1.5 h-4 bg-primary-500 rounded-full"></div>
+                  <div class="w-1.5 h-8 bg-primary-400 rounded-full"></div>
+                  <div class="w-1.5 h-12 bg-primary-300 rounded-full"></div>
+                  <div class="w-1.5 h-6 bg-accent-500 rounded-full"></div>
+                  <div class="w-1.5 h-10 bg-accent-400 rounded-full"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Floating badges -->
+            <div class="absolute -top-6 -right-6 bg-gray-800 rounded-full px-4 py-2 shadow-lg flex items-center space-x-2 animate-float">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+              <span class="font-medium">AI-Powered</span>
+            </div>
+            
+            <div class="absolute -bottom-6 -left-6 bg-gray-800 rounded-full px-4 py-2 shadow-lg flex items-center space-x-2 animate-float" style="animation-delay: 1s;">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+              <span class="font-medium">Responsive</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Features Section -->
+    <section class="py-20 bg-gray-900">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">Powerful Features</h2>
+          <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+            Our AI-powered music visualizer comes with a suite of features designed to create the most immersive audio-visual experience.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <!-- Feature 1 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Real-time Audio Analysis</h3>
+            <p class="text-gray-400">
+              Advanced machine learning algorithms analyze your music in real-time, detecting beats, harmonies, and emotional tones with precision.
+            </p>
+          </div>
+          
+          <!-- Feature 2 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-accent-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Customizable Visuals</h3>
+            <p class="text-gray-400">
+              Choose from multiple visualization styles and customize colors, effects, and camera movements to create your perfect visual experience.
+            </p>
+          </div>
+          
+          <!-- Feature 3 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">3D Visualizations</h3>
+            <p class="text-gray-400">
+              Experience your music in three dimensions with stunning WebGL-powered visuals that respond dynamically to every aspect of your audio.
+            </p>
+          </div>
+          
+          <!-- Feature 4 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-accent-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Cross-Platform Sharing</h3>
+            <p class="text-gray-400">
+              Share your visualizations across social media platforms and with friends to showcase your musical journey in a whole new way.
+            </p>
+          </div>
+          
+          <!-- Feature 5 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Responsive Design</h3>
+            <p class="text-gray-400">
+              Enjoy your visualizations on any device with our fully responsive design that adapts to desktops, tablets, and mobile screens.
+            </p>
+          </div>
+          
+          <!-- Feature 6 -->
+          <div class="bg-gray-800 rounded-2xl p-8 feature-card">
+            <div class="w-14 h-14 bg-accent-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-accent-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Streaming Integration</h3>
+            <p class="text-gray-400">
+              Connect to popular streaming services like Spotify, Apple Music, and SoundCloud to visualize your favorite playlists instantly.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- How It Works Section -->
+    <section id="how-it-works" class="py-20">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
+          <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+            Creating stunning music visualizations is simple with our easy-to-use platform.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <!-- Step 1 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <span class="text-2xl font-bold text-primary-400">1</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Upload Your Music</h3>
+            <p class="text-gray-400">
+              Upload your audio files or connect to your favorite streaming service to access your music library.
+            </p>
+          </div>
+          
+          <!-- Step 2 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <span class="text-2xl font-bold text-primary-400">2</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Choose Visualization Style</h3>
+            <p class="text-gray-400">
+              Select from various visualization styles and customize colors, effects, and camera movements to your preference.
+            </p>
+          </div>
+          
+          <!-- Step 3 -->
+          <div class="flex flex-col items-center text-center">
+            <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-6">
+              <span class="text-2xl font-bold text-primary-400">3</span>
+            </div>
+            <h3 class="text-xl font-semibold mb-3">Experience & Share</h3>
+            <p class="text-gray-400">
+              Enjoy your music with stunning visualizations and share your experience with friends on social media.
+            </p>
+          </div>
+        </div>
+        
+        <div class="mt-16 text-center">
+          <a href="/upload" class="inline-block px-8 py-3 bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 rounded-full text-white font-medium text-lg transition-all transform hover:-translate-y-1">
+            Try It Now
+          </a>
+        </div>
+      </div>
+    </section>
+    
+    <!-- Testimonials Section -->
+    <section class="py-20 bg-gray-900">
+      <div class="container mx-auto px-4">
+        <div class="text-center mb-16">
+          <h2 class="text-3xl md:text-4xl font-bold mb-4">What Our Users Say</h2>
+          <p class="text-xl text-gray-400 max-w-2xl mx-auto">
+            Hear from music enthusiasts who have transformed their listening experience with SoundWave AI.
+          </p>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <!-- Testimonial 1 -->
+          <div class="bg-gray-800 rounded-2xl p-8 testimonial-card">
+            <div class="flex items-center mb-6">
+              <img class="w-12 h-12 rounded-full mr-4" src="https://picsum.photos/seed/user4/200" alt="User">
+              <div>
+                <h4 class="font-semibold">Alex Johnson</h4>
+                <div class="flex mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-400">
+              "SoundWave AI has completely transformed how I experience music. The visualizations are so responsive to every beat and harmony. It's like seeing the soul of the music come alive!"
+            </p>
+          </div>
+          
+          <!-- Testimonial 2 -->
+          <div class="bg-gray-800 rounded-2xl p-8 testimonial-card">
+            <div class="flex items-center mb-6">
+              <img class="w-12 h-12 rounded-full mr-4" src="https://picsum.photos/seed/user5/200" alt="User">
+              <div>
+                <h4 class="font-semibold">Maya Rodriguez</h4>
+                <div class="flex mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-400">
+              "As a DJ, I've been using SoundWave AI to enhance my live performances. The audience is always mesmerized by the synchronized visuals, and it's so easy to customize for different moods and venues."
+            </p>
+          </div>
+          
+          <!-- Testimonial 3 -->
+          <div class="bg-gray-800 rounded-2xl p-8 testimonial-card">
+            <div class="flex items-center mb-6">
+              <img class="w-12 h-12 rounded-full mr-4" src="https://picsum.photos/seed/user6/200" alt="User">
+              <div>
+                <h4 class="font-semibold">David Kim</h4>
+                <div class="flex mt-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+            <p class="text-gray-400">
+              "I love how SoundWave AI detects the emotional tones in my music collection. The visualizations actually change based on whether a song is upbeat, melancholic, or energetic. It's incredibly intuitive!"
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+    
+    <!-- CTA Section -->
+    <section class="cta-section py-20">
+      <div class="container mx-auto px-4 text-center">
+        <h2 class="text-3xl md:text-4xl font-bold mb-6">Ready to Transform Your Music Experience?</h2>
+        <p class="text-xl text-gray-200 mb-10 max-w-2xl mx-auto">
+          Join thousands of music enthusiasts who have already discovered a new dimension to their favorite songs.
+        </p>
+        <div class="flex flex-col sm:flex-row justify-center gap-4">
+          <a href="/upload" class="px-8 py-4 bg-white hover:bg-gray-100 rounded-full text-gray-900 font-medium text-lg transition-all transform hover:-translate-y-1">
+            Get Started Now
+          </a>
+          <a href="/visualizer" class="px-8 py-4 bg-transparent border border-white hover:bg-white hover:bg-opacity-10 rounded-full text-white font-medium text-lg transition-all">
+            Try Demo
+          </a>
+        </div>
+      </div>
+    </section>
+    
+    
+<!-- Footer -->
+<footer class="bg-gray-900 py-12">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col md:flex-row justify-between items-center">
+      <div class="flex items-center space-x-2 mb-6 md:mb-0">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
+            <div class="w-4 h-4 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+              <div class="w-1.5 h-3 bg-white rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</span>
+      </div>
+      
+      <nav class="flex flex-wrap justify-center space-x-8 mb-6 md:mb-0">
+        <a href="/" class="text-gray-400 hover:text-primary-300 transition-colors">Home</a>
+        <a href="/visualizer" class="text-gray-400 hover:text-primary-300 transition-colors">Visualizer</a>
+        <a href="/upload" class="text-gray-400 hover:text-primary-300 transition-colors">Upload</a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">About</a>
+      </nav>
+      
+      <div class="flex space-x-4">
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+          </svg>
+        </a>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+      <p class="text-gray-500 text-sm">
+        &copy; 2025 SoundWave AI. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>
+
+    
+    <script>
+      // Mobile menu toggle
+      document.addEventListener('DOMContentLoaded', () => {
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+        
+        // Smooth scroll for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+          anchor.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            
+            if (targetElement) {
+              window.scrollTo({
+                top: targetElement.offsetTop - 80,
+                behavior: 'smooth'
+              });
+            }
+          });
+        });
+      });
+    </script>
+  <script>
+// 添加样式
+const bgStyle = document.createElement('style');
+bgStyle.textContent = `
+  .element-highlight {
+      outline: 2px solid #3b82f6 !important;
+      outline-offset: -2px !important;
+  }
+  .element-selecting * {
+      cursor: crosshair !important;
+  }
+  .component-tooltip {
+      position: fixed;
+      background: rgba(17, 24, 39, 0.9);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      z-index: 2147483646;
+      pointer-events: none;
+      transition: all 0.05s linear;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(8px);
+  }
+  .component-highlight {
+      outline: 2px dashed #3b82f6 !important;
+      outline-offset: -2px !important;
+      background-color: rgba(59, 130, 246, 0.1) !important;
+      z-index: 2147483645 !important;
+      position: relative !important;
+  }
+`;
+document.head.appendChild(bgStyle);
+
+// A function to handle sending messages.
+function sendMessage(e) {
+  // Prevent any default browser behaviour.
+  e.preventDefault();
+
+  // Send a message to the receiver window.
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'URL_CHANGE',
+          url: window.location.href
+      }, '*');
+  }
+}
+
+// Add an event listener that will execute the sendMessage() function
+window.addEventListener('load', sendMessage);
+window.addEventListener("hashchange", sendMessage);
+window.addEventListener("popstate", sendMessage);
+
+// elementor selector script
+let currentHighlight = null;
+let isSelecting = false;
+
+// send message to parent window to notify that the iframe is ready
+function notifyReady() {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'IFRAME_READY',
+          url: window.location.href
+      }, '*');
+  }
+}
+
+// send message to parent window to report an error
+function reportError(message) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'SELECTOR_ERROR',
+          message: message
+      }, '*');
+  }
+}
+
+function getElementPath(element) {
+  try {
+      const path = [];
+      while (element && element.nodeType === Node.ELEMENT_NODE) {
+          let selector = element.nodeName.toLowerCase();
+          if (element.id) {
+              selector += '#' + element.id;
+          } else {
+              let nth = 1;
+              let sib = element;
+              while (sib.previousElementSibling) {
+                  if (sib.previousElementSibling.nodeName === element.nodeName) nth++;
+                  sib = sib.previousElementSibling;
+              }
+              if (nth !== 1) selector += ':nth-of-type(' + nth + ')';
+          }
+          path.unshift(selector);
+          element = element.parentNode;
+      }
+      return path.join(' > ');
+  } catch (error) {
+      reportError('Failed to get element path: ' + error.message);
+      return '';
+  }
+}
+
+function findComponentElement(element) {
+  let current = element;
+  while (current && current !== document.body) {
+      if (current.hasAttribute('data-buildglarecomponent')) {
+          return current;
+      }
+      current = current.parentElement;
+  }
+  return null;
+}
+
+function getElementInfo(element) {
+  try {
+      const info = {
+          selector: getElementPath(element),
+          elementId: element.id || null,
+          elementClasses: Array.from(element.classList) || [],
+          url: window.location.href
+      };
+      
+      // 查找最近的组件元素
+      const componentElement = findComponentElement(element);
+      if (componentElement) {
+          info.componentName = componentElement.getAttribute('data-buildglarecomponent');
+      }
+      
+      return info;
+  } catch (error) {
+      reportError('Failed to get element info: ' + error.message);
+      return null;
+  }
+}
+
+function handleMouseMove(e) {
+  try {
+      if (!isSelecting) return;
+      if (currentHighlight) {
+          currentHighlight.classList.remove('element-highlight');
+      }
+      currentHighlight = e.target;
+      e.target.classList.add('element-highlight');
+      e.preventDefault();
+      e.stopPropagation();
+  } catch (error) {
+      reportError('Mouse move error: ' + error.message);
+  }
+}
+
+function handleClick(e) {
+  try {
+      if (!isSelecting) return;
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const elementInfo = getElementInfo(e.target);
+      if (elementInfo) {
+          window.parent.postMessage({
+              type: 'ELEMENT_SELECTED',
+              ...elementInfo
+          }, '*');
+      }
+      
+      disableElementSelector();
+  } catch (error) {
+      reportError('Click error: ' + error.message);
+  }
+}
+
+function enableElementSelector() {
+  try {
+      isSelecting = true;
+      document.body.classList.add('element-selecting');
+      document.addEventListener('mousemove', handleMouseMove, true);
+      document.addEventListener('click', handleClick, true);
+  } catch (error) {
+      reportError('Failed to enable selector: ' + error.message);
+  }
+}
+
+function disableElementSelector() {
+  try {
+      isSelecting = false;
+      document.removeEventListener('mousemove', handleMouseMove, true);
+      document.removeEventListener('click', handleClick, true);
+      if (currentHighlight) {
+          currentHighlight.classList.remove('element-highlight');
+          currentHighlight = null;
+      }
+      document.body.classList.remove('element-selecting');
+  } catch (error) {
+      reportError('Failed to disable selector: ' + error.message);
+  }
+}
+
+// listen for messages from parent window
+window.addEventListener('message', function(event) {
+  try {
+      if (event.data.type === 'START_ELEMENT_SELECTOR') {
+          enableElementSelector();
+      } else if (event.data.type === 'STOP_ELEMENT_SELECTOR') {
+          disableElementSelector();
+      } else if (event.data.type === 'CHECK_READY') {
+          window.parent.postMessage({
+              type: 'CHECK_READY_RESPONSE',
+              isReady: document.readyState === 'complete',
+              url: window.location.href
+          }, '*');
+      }
+  } catch (error) {
+      reportError('Message handling error: ' + error.message);
+  }
+});
+
+// notify parent window that the iframe is ready
+window.addEventListener('load', notifyReady);
+window.addEventListener('hashchange', notifyReady);
+window.addEventListener('popstate', notifyReady);
+
+// check if the iframe is ready and notify parent window
+if (document.readyState === 'complete') {
+  notifyReady();
+}
+
+// 创建组件提示工具 DOM
+let tooltip = document.createElement('div');
+tooltip.className = 'component-tooltip';
+tooltip.style.display = 'none';
+document.body.appendChild(tooltip);
+
+// 用于跟踪当前高亮的元素
+let currentComponentHighlight = null;
+
+// 处理鼠标移动
+const handleComponentMouseMove = (e) => {
+  if (isSelecting) return; // 如果正在使用元素选择器，不显示组件提示
+
+  let target = e.target;
+  
+  // 移除当前高亮
+  if (currentComponentHighlight) {
+      currentComponentHighlight.classList.remove('component-highlight');
+      currentComponentHighlight = null;
+  }
+  
+  // 查找最近的带有 data-buildglarecomponent 属性的祖先元素
+  while (target && target !== document.body) {
+      if (target.hasAttribute('data-buildglarecomponent')) {
+          // 添加高亮效果
+          target.classList.add('component-highlight');
+          currentComponentHighlight = target;
+          
+          // 更新提示工具位置和内容
+          tooltip.style.display = 'block';
+          
+          // 计算位置，确保提示框不会超出视口
+          const rect = target.getBoundingClientRect();
+          const tooltipX = Math.min(
+              e.clientX + 10, 
+              window.innerWidth - tooltip.offsetWidth - 10
+          );
+          const tooltipY = Math.min(
+              e.clientY + 10, 
+              window.innerHeight - tooltip.offsetHeight - 10
+          );
+          
+          tooltip.style.left = tooltipX + 'px';
+          tooltip.style.top = tooltipY + 'px';
+          tooltip.textContent = 'This is ' + target.getAttribute('data-buildglarecomponent') + ' component';
+          return;
+      }
+      target = target.parentElement;
+  }
+  
+  // 如果没有找到组件，隐藏提示工具
+  tooltip.style.display = 'none';
+};
+
+// 监听鼠标移动事件
+document.addEventListener('mousemove', handleComponentMouseMove);
+
+// 处理滚动事件
+const handleScroll = () => {
+  tooltip.style.display = 'none';
+  if (currentComponentHighlight) {
+      currentComponentHighlight.classList.remove('component-highlight');
+      currentComponentHighlight = null;
+  }
+};
+
+// 监听滚动事件
+document.addEventListener('scroll', handleScroll, true);
+window.addEventListener('scroll', handleScroll, true);
+
+// 监听窗口大小改变事件
+window.addEventListener('resize', handleScroll);
+</script>
+<div id="dev-warning-banner" class="fixed inset-x-0 top-0 z-[2147483647]">
+  <!-- Animated background -->
+  <div class="absolute inset-0 bg-gradient-to-r from-yellow-50 via-yellow-100 to-yellow-50 animate-gradient"></div>
+  
+  <!-- Main content -->
+  <div class="relative mx-auto max-w-7xl py-1.5 px-2 sm:px-4">
+    <div class="flex items-center justify-between gap-2">
+      <!-- Left side with warning icon and text -->
+      <div class="flex items-center gap-1.5 min-w-0">
+        <!-- Warning Icon -->
+        <span class="flex-shrink-0">
+          <svg class="h-4 w-4 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </span>
+
+        <!-- Dev Mode Badge -->
+        <span class="flex-shrink-0 text-xs sm:text-sm font-medium text-amber-900">
+          <span class="rounded bg-amber-100 px-1 py-0.5 font-medium">DEV Mode</span>
+        </span>
+
+        <!-- Publish Text -->
+        <div class="flex items-center text-xs sm:text-sm text-amber-800 whitespace-nowrap overflow-hidden">
+          <span class="mx-1 hidden sm:inline">·</span>
+          <span class="inline-flex items-center gap-1">
+            <span class="hidden lg:inline">You're in development environment.</span>
+            <span class="hidden md:inline lg:inline">Please</span>
+            Click
+            <svg class="w-3.5 h-3.5 flex-shrink-0" xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'>
+              <path stroke-linecap='round' stroke-linejoin='round' d='M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z' />
+            </svg>
+            to publish
+            <span class="hidden lg:inline">to production</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Right side with checkbox and close button -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <label class="flex items-center cursor-pointer">
+          <input type="checkbox" id="dev-warning-checkbox" class="h-3 w-3 rounded border-amber-300 text-amber-600 focus:ring-amber-600">
+          <span class="ml-1 text-xs text-amber-700 whitespace-nowrap">
+            <span class="hidden sm:inline">Don't show again</span>
+            <span class="inline sm:hidden">Don't show</span>
+          </span>
+        </label>
+        <button type="button" class="group p-0.5" onclick="closeBanner()" aria-label="Close banner">
+          <svg class="h-3.5 w-3.5 text-amber-600 group-hover:text-amber-700" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradient 15s ease infinite;
+    }
+  </style>
+
+  <script>
+    // Check if banner should be hidden
+    if (localStorage.getItem('hideDevWarning') === 'true') {
+      document.getElementById('dev-warning-banner').style.display = 'none';
+    }
+
+    function closeBanner() {
+      const banner = document.getElementById('dev-warning-banner');
+      const checkbox = document.getElementById('dev-warning-checkbox');
+      
+      if (checkbox.checked) {
+        localStorage.setItem('hideDevWarning', 'true');
+      }
+      
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-100%)';
+      banner.style.transition = 'all 0.3s ease-out';
+      
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+    }
+  </script>
+</div>
+<a href="https://www.buildglare.com" 
+   target="_blank" 
+   rel="noopener" 
+   class="fixed bottom-4 right-4 z-10 flex items-center gap-1.5 py-1.5 px-2.5 rounded-full text-xs font-medium bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200/40 text-slate-600 transition-all duration-300 hover:translate-y-[-1px] group">
+  <span class="font-light">Built on</span>
+  <span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-violet-500 font-semibold tracking-wide">
+    Buildglare
+  </span>
+</a>
+</body>
+</html>

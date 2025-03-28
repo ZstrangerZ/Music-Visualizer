@@ -1,0 +1,1235 @@
+
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Upload Music | SoundWave AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="icon" type="image/x-icon" href="https://ico.buildglarecontent.com/music-visualizer/favicon.ico">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <script>
+      tailwind.config = {
+        theme: {
+          extend: {
+            colors: {
+              primary: {
+                50: '#f0f9ff',
+                100: '#e0f2fe',
+                200: '#bae6fd',
+                300: '#7dd3fc',
+                400: '#38bdf8',
+                500: '#0ea5e9',
+                600: '#0284c7',
+                700: '#0369a1',
+                800: '#075985',
+                900: '#0c4a6e',
+              },
+              accent: {
+                500: '#8b5cf6',
+                600: '#7c3aed',
+                700: '#6d28d9',
+              }
+            },
+            animation: {
+              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+              'bounce-slow': 'bounce 3s infinite',
+            }
+          }
+        }
+      }
+    </script>
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+      }
+      
+      .file-drop-area {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        max-width: 100%;
+        padding: 2rem 1rem;
+        border: 2px dashed;
+        border-radius: 1rem;
+        transition: 0.2s;
+      }
+      
+      .file-drop-area.is-active {
+        background-color: rgba(14, 165, 233, 0.05);
+        border-color: rgba(14, 165, 233, 0.8);
+      }
+      
+      .fake-btn {
+        flex-shrink: 0;
+        background-color: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 3px;
+        padding: 8px 15px;
+        margin-right: 10px;
+        font-size: 12px;
+        text-transform: uppercase;
+      }
+      
+      .file-msg {
+        font-size: 16px;
+        font-weight: 300;
+        line-height: 1.4;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+      
+      .file-input {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 100%;
+        cursor: pointer;
+        opacity: 0;
+      }
+      
+      .file-input:focus {
+        outline: none;
+      }
+      
+      .streaming-service-button {
+        transition: all 0.3s ease;
+      }
+      
+      .streaming-service-button:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+      }
+      
+      .upload-track-row {
+        transition: all 0.2s ease;
+      }
+      
+      .upload-track-row:hover .track-actions {
+        opacity: 1;
+      }
+      
+      .track-actions {
+        opacity: 0.7;
+        transition: opacity 0.2s ease;
+      }
+      
+      @keyframes wave {
+        0% { transform: translateY(0); }
+        50% { transform: translateY(-5px); }
+        100% { transform: translateY(0); }
+      }
+      
+      .wave-animation > * {
+        animation: wave 1.5s infinite;
+      }
+      
+      .wave-animation > *:nth-child(1) { animation-delay: 0s; }
+      .wave-animation > *:nth-child(2) { animation-delay: 0.1s; }
+      .wave-animation > *:nth-child(3) { animation-delay: 0.2s; }
+      .wave-animation > *:nth-child(4) { animation-delay: 0.3s; }
+      .wave-animation > *:nth-child(5) { animation-delay: 0.4s; }
+      
+      .tab-active {
+        color: white;
+        border-color: #0ea5e9;
+      }
+      
+      .tab-inactive {
+        color: #9ca3af;
+        border-color: transparent;
+      }
+      
+      .tab-content {
+        display: none;
+      }
+      
+      .tab-content.active {
+        display: block;
+      }
+    </style>
+  <script>
+const originalConsoleError = console.error;
+const version = Math.random().toString(36).slice(-8);
+console.error = function(...args) {
+  if (!args || args.length === 0) return;
+  originalConsoleError.apply(console, args);
+  
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: args.join(' ')
+      }, '*');
+  }
+};
+
+window.addEventListener('unhandledrejection', function(event) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: 'Unhandled Promise Rejection: ' + event.reason
+      }, '*');
+  }
+});
+
+window.addEventListener('error', function(event) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: event.message
+      }, '*');
+  }
+});
+
+// refresh the error status
+window.addEventListener('load', function() {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'CONSOLE_ERROR',
+          version: version,
+          error: null
+      }, '*');
+  }
+});
+</script>
+</head>
+  <body class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+    
+<!-- Header -->
+<header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
+  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+    <div class="flex items-center space-x-2">
+      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+        <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+            <div class="w-2 h-4 bg-white rounded-full"></div>
+          </div>
+        </div>
+      </div>
+      <a href="/" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</a>
+    </div>
+    
+    <nav class="hidden md:flex items-center space-x-8">
+      <a href="/" class="text-white hover:text-primary-300 transition-colors">Home</a>
+      <a href="/visualizer" class="text-white hover:text-primary-300 transition-colors">Visualizer</a>
+      <a href="/upload" class="text-white hover:text-primary-300 transition-colors">Upload Music</a>
+      <a href="#" class="text-white hover:text-primary-300 transition-colors">About</a>
+    </nav>
+    
+    <div class="flex items-center space-x-4">
+      <a href="/upload" class="hidden md:block px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium">
+        Get Started
+      </a>
+      <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+        </svg>
+      </button>
+    </div>
+  </div>
+  
+  <!-- Mobile Navigation (Hidden by default) -->
+  <div class="md:hidden hidden bg-gray-900 bg-opacity-95" id="mobile-menu">
+    <div class="container mx-auto px-4 py-4">
+      <nav class="flex flex-col space-y-4">
+        <a href="/" class="text-white hover:text-primary-300 transition-colors py-2">Home</a>
+        <a href="/visualizer" class="text-white hover:text-primary-300 transition-colors py-2">Visualizer</a>
+        <a href="/upload" class="text-white hover:text-primary-300 transition-colors py-2">Upload Music</a>
+        <a href="#" class="text-white hover:text-primary-300 transition-colors py-2">About</a>
+        <a href="/upload" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium text-center">
+          Get Started
+        </a>
+      </nav>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Mobile menu toggle
+  document.addEventListener('DOMContentLoaded', () => {
+    const mobileMenuButton = document.getElementById('mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
+    
+    if (mobileMenuButton && mobileMenu) {
+      mobileMenuButton.addEventListener('click', () => {
+        mobileMenu.classList.toggle('hidden');
+      });
+    }
+  });
+</script>
+
+    
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 pt-32 pb-20">
+      <div class="max-w-5xl mx-auto">
+        <h1 class="text-4xl md:text-5xl font-bold mb-8 text-center">
+          <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">
+            Upload Your Music
+          </span>
+        </h1>
+        
+        <p class="text-xl text-center text-gray-300 mb-10 max-w-3xl mx-auto">
+          Upload your audio files or connect to streaming services to create stunning AI-powered visualizations
+        </p>
+        
+        <!-- Tabs -->
+        <div class="mb-8 flex justify-center">
+          <div class="border-b border-gray-700 flex">
+            <button class="px-6 py-3 font-medium border-b-2 tab-active" id="tab-upload">Upload Files</button>
+            <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-streaming">Streaming Services</button>
+            <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-library">My Library</button>
+          </div>
+        </div>
+        
+        <!-- Upload Files Tab -->
+        <div class="tab-content active" id="content-upload">
+          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
+            <h2 class="text-2xl font-semibold mb-6">Upload Audio Files</h2>
+            
+            <!-- File Upload Area -->
+            <div class="file-drop-area border-primary-400 text-primary-300 mb-6">
+              <span class="fake-btn">Choose files</span>
+              <span class="file-msg">or drag and drop audio files here</span>
+              <input class="file-input" type="file" accept="audio/*" multiple>
+            </div>
+            
+            <!-- Upload Progress (Initially Hidden) -->
+            <div class="hidden mb-6" id="upload-progress">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-medium">Uploading...</span>
+                <span class="text-sm font-medium" id="upload-percentage">0%</span>
+              </div>
+              <div class="w-full bg-gray-700 rounded-full h-2.5">
+                <div class="bg-gradient-to-r from-primary-500 to-accent-500 h-2.5 rounded-full" id="upload-progress-bar" style="width: 0%"></div>
+              </div>
+            </div>
+            
+            <!-- Upload Options -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
+                <h3 class="font-medium mb-2">Audio Quality</h3>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center">
+                    <input type="radio" name="quality" value="standard" class="mr-2 text-primary-500" checked>
+                    <span>Standard</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" name="quality" value="high" class="mr-2 text-primary-500">
+                    <span>High</span>
+                  </label>
+                </div>
+              </div>
+              
+              <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
+                <h3 class="font-medium mb-2">Privacy</h3>
+                <div class="flex items-center space-x-4">
+                  <label class="flex items-center">
+                    <input type="radio" name="privacy" value="public" class="mr-2 text-primary-500" checked>
+                    <span>Public</span>
+                  </label>
+                  <label class="flex items-center">
+                    <input type="radio" name="privacy" value="private" class="mr-2 text-primary-500">
+                    <span>Private</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+              <button class="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
+                Cancel
+              </button>
+              <button class="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 rounded-lg transition-all" id="upload-button">
+                Upload & Visualize
+              </button>
+            </div>
+          </div>
+          
+          <!-- Upload Tips -->
+          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+            <h2 class="text-2xl font-semibold mb-6">Upload Tips</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                  </svg>
+                </div>
+                <h3 class="font-medium mb-2">Supported Formats</h3>
+                <p class="text-gray-400 text-sm">We support MP3, WAV, FLAC, and OGG audio formats for the best visualization results.</p>
+              </div>
+              
+              <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <h3 class="font-medium mb-2">Duration Limit</h3>
+                <p class="text-gray-400 text-sm">For best performance, upload songs under 10 minutes. Longer tracks may take more time to process.</p>
+              </div>
+              
+              <div class="flex flex-col items-center text-center">
+                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                  </svg>
+                </div>
+                <h3 class="font-medium mb-2">Better Visualization</h3>
+                <p class="text-gray-400 text-sm">Songs with clear beats and dynamic range create the most impressive visual experiences.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Streaming Services Tab -->
+        <div class="tab-content" id="content-streaming">
+          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
+            <h2 class="text-2xl font-semibold mb-6">Connect Streaming Services</h2>
+            <p class="text-gray-400 mb-8">Connect your favorite streaming services to import your playlists and favorite tracks directly.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              
+                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Spotify_icon.svg/1982px-Spotify_icon.svg.png" alt="Spotify" class="w-16 h-16 object-contain mb-4">
+                  <span class="font-medium">Spotify</span>
+                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                </button>
+              
+                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png" alt="Apple Music" class="w-16 h-16 object-contain mb-4">
+                  <span class="font-medium">Apple Music</span>
+                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                </button>
+              
+                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Youtube_Music_icon.svg/2048px-Youtube_Music_icon.svg.png" alt="YouTube Music" class="w-16 h-16 object-contain mb-4">
+                  <span class="font-medium">YouTube Music</span>
+                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                </button>
+              
+                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Soundcloud_logo.svg/2560px-Soundcloud_logo.svg.png" alt="SoundCloud" class="w-16 h-16 object-contain mb-4">
+                  <span class="font-medium">SoundCloud</span>
+                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                </button>
+              
+            </div>
+          </div>
+          
+          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+            <h2 class="text-2xl font-semibold mb-6">Streaming Benefits</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div class="flex space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium mb-1">Access Your Library</h3>
+                  <p class="text-gray-400 text-sm">Easily access all your playlists and favorite tracks without having to upload files.</p>
+                </div>
+              </div>
+              
+              <div class="flex space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium mb-1">Discover New Visuals</h3>
+                  <p class="text-gray-400 text-sm">Our AI analyzes your music preferences to create personalized visualization styles.</p>
+                </div>
+              </div>
+              
+              <div class="flex space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium mb-1">Sync Across Devices</h3>
+                  <p class="text-gray-400 text-sm">Your visualizations and preferences sync across all your devices automatically.</p>
+                </div>
+              </div>
+              
+              <div class="flex space-x-4">
+                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 class="font-medium mb-1">Premium Features</h3>
+                  <p class="text-gray-400 text-sm">Connected accounts get access to exclusive visualization styles and effects.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- My Library Tab -->
+        <div class="tab-content" id="content-library">
+          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+            <div class="flex justify-between items-center mb-6">
+              <h2 class="text-2xl font-semibold">My Music Library</h2>
+              <div class="flex space-x-2">
+                <div class="relative">
+                  <input type="text" placeholder="Search library..." class="py-2 px-4 pr-10 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                </div>
+                <select class="py-2 px-4 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                  <option value="recent">Recently Added</option>
+                  <option value="name">Name</option>
+                  <option value="artist">Artist</option>
+                  <option value="duration">Duration</option>
+                </select>
+              </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left">
+                <thead class="text-xs uppercase text-gray-400 border-b border-gray-700">
+                  <tr>
+                    <th scope="col" class="px-4 py-3">Track</th>
+                    <th scope="col" class="px-4 py-3">Duration</th>
+                    <th scope="col" class="px-4 py-3">Added</th>
+                    <th scope="col" class="px-4 py-3">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music1/300/300" alt="Summer Vibes">
+                          <div>
+                            <div class="font-medium">Summer Vibes</div>
+                            <div class="text-sm text-gray-400">Chill Wave</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">3:45</td>
+                      <td class="px-4 py-3">2025-06-15</td>
+                      <td class="px-4 py-3">
+                        <div class="flex space-x-2 track-actions">
+                          <a href="/visualizer?id=1" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                            Visualize
+                          </a>
+                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music2/300/300" alt="Electric Dreams">
+                          <div>
+                            <div class="font-medium">Electric Dreams</div>
+                            <div class="text-sm text-gray-400">Synth Master</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">4:20</td>
+                      <td class="px-4 py-3">2025-06-14</td>
+                      <td class="px-4 py-3">
+                        <div class="flex space-x-2 track-actions">
+                          <a href="/visualizer?id=2" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                            Visualize
+                          </a>
+                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music3/300/300" alt="Ocean Breeze">
+                          <div>
+                            <div class="font-medium">Ocean Breeze</div>
+                            <div class="text-sm text-gray-400">Nature Sounds</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">5:12</td>
+                      <td class="px-4 py-3">2025-06-12</td>
+                      <td class="px-4 py-3">
+                        <div class="flex space-x-2 track-actions">
+                          <a href="/visualizer?id=3" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                            Visualize
+                          </a>
+                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music4/300/300" alt="Midnight Jazz">
+                          <div>
+                            <div class="font-medium">Midnight Jazz</div>
+                            <div class="text-sm text-gray-400">Smooth Quartet</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">6:05</td>
+                      <td class="px-4 py-3">2025-06-10</td>
+                      <td class="px-4 py-3">
+                        <div class="flex space-x-2 track-actions">
+                          <a href="/visualizer?id=4" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                            Visualize
+                          </a>
+                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  
+                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                      <td class="px-4 py-3">
+                        <div class="flex items-center space-x-3">
+                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music5/300/300" alt="Urban Rhythm">
+                          <div>
+                            <div class="font-medium">Urban Rhythm</div>
+                            <div class="text-sm text-gray-400">City Beats</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td class="px-4 py-3">3:28</td>
+                      <td class="px-4 py-3">2025-06-08</td>
+                      <td class="px-4 py-3">
+                        <div class="flex space-x-2 track-actions">
+                          <a href="/visualizer?id=5" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                            Visualize
+                          </a>
+                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  
+                </tbody>
+              </table>
+            </div>
+            
+            <div class="mt-6 flex justify-between items-center">
+              <div class="text-sm text-gray-400">
+                Showing 5 of 24 tracks
+              </div>
+              <div class="flex space-x-2">
+                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                  </svg>
+                </button>
+                <button class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">1</button>
+                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">2</button>
+                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">3</button>
+                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+    
+    
+<!-- Footer -->
+<footer class="bg-gray-900 py-12">
+  <div class="container mx-auto px-4">
+    <div class="flex flex-col md:flex-row justify-between items-center">
+      <div class="flex items-center space-x-2 mb-6 md:mb-0">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+          <div class="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
+            <div class="w-4 h-4 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+              <div class="w-1.5 h-3 bg-white rounded-full"></div>
+            </div>
+          </div>
+        </div>
+        <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</span>
+      </div>
+      
+      <nav class="flex flex-wrap justify-center space-x-8 mb-6 md:mb-0">
+        <a href="/" class="text-gray-400 hover:text-primary-300 transition-colors">Home</a>
+        <a href="/visualizer" class="text-gray-400 hover:text-primary-300 transition-colors">Visualizer</a>
+        <a href="/upload" class="text-gray-400 hover:text-primary-300 transition-colors">Upload</a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">About</a>
+      </nav>
+      
+      <div class="flex space-x-4">
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd" />
+          </svg>
+        </a>
+        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+          </svg>
+        </a>
+      </div>
+    </div>
+    
+    <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+      <p class="text-gray-500 text-sm">
+        &copy; 2025 SoundWave AI. All rights reserved.
+      </p>
+    </div>
+  </div>
+</footer>
+
+    
+    <script>
+      // Tab switching
+      document.addEventListener('DOMContentLoaded', function() {
+        const tabs = document.querySelectorAll('[id^="tab-"]');
+        const contents = document.querySelectorAll('[id^="content-"]');
+        
+        tabs.forEach(tab => {
+          tab.addEventListener('click', () => {
+            // Remove active class from all tabs and contents
+            tabs.forEach(t => {
+              t.classList.remove('tab-active');
+              t.classList.add('tab-inactive');
+            });
+            contents.forEach(c => c.classList.remove('active'));
+            
+            // Add active class to clicked tab and corresponding content
+            tab.classList.add('tab-active');
+            tab.classList.remove('tab-inactive');
+            
+            const contentId = 'content-' + tab.id.split('-')[1];
+            document.getElementById(contentId).classList.add('active');
+          });
+        });
+      });
+      
+      // File upload interaction
+      const $fileInput = document.querySelector('.file-input');
+      const $fileDropArea = document.querySelector('.file-drop-area');
+      const $fileMsg = document.querySelector('.file-msg');
+      const $uploadButton = document.getElementById('upload-button');
+      const $uploadProgress = document.getElementById('upload-progress');
+      const $uploadProgressBar = document.getElementById('upload-progress-bar');
+      const $uploadPercentage = document.getElementById('upload-percentage');
+      
+      $fileInput.addEventListener('change', function() {
+        if (this.files && this.files.length) {
+          $fileMsg.textContent = `${this.files.length} file${this.files.length !== 1 ? 's' : ''} selected`;
+          $fileMsg.classList.add('font-medium');
+          $fileDropArea.classList.add('border-primary-500');
+        }
+      });
+      
+      ['dragover', 'dragenter'].forEach(eventName => {
+        $fileDropArea.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          $fileDropArea.classList.add('is-active');
+        }, false);
+      });
+      
+      ['dragleave', 'dragend', 'drop'].forEach(eventName => {
+        $fileDropArea.addEventListener(eventName, e => {
+          e.preventDefault();
+          e.stopPropagation();
+          $fileDropArea.classList.remove('is-active');
+        }, false);
+      });
+      
+      $fileDropArea.addEventListener('drop', e => {
+        $fileInput.files = e.dataTransfer.files;
+        if ($fileInput.files.length) {
+          $fileMsg.textContent = `${$fileInput.files.length} file${$fileInput.files.length !== 1 ? 's' : ''} selected`;
+          $fileMsg.classList.add('font-medium');
+          $fileDropArea.classList.add('border-primary-500');
+        }
+      }, false);
+      
+      // Mock upload process
+      $uploadButton.addEventListener('click', () => {
+        if (!$fileInput.files.length) {
+          alert('Please select files to upload');
+          return;
+        }
+        
+        $uploadProgress.classList.remove('hidden');
+        
+        // Simulate upload process with progress
+        let progress = 0;
+        const interval = setInterval(() => {
+          progress += Math.floor(Math.random() * 10) + 1;
+          if (progress > 100) progress = 100;
+          
+          $uploadProgressBar.style.width = `${progress}%`;
+          $uploadPercentage.textContent = `${progress}%`;
+          
+          if (progress === 100) {
+            clearInterval(interval);
+            
+            // Add success message
+            const successMsg = document.createElement('div');
+            successMsg.className = 'flex items-center space-x-2 text-green-400 mt-2';
+            successMsg.innerHTML = `
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+              </svg>
+              <span>Upload complete! Preparing visualization...</span>
+            `;
+            $uploadProgress.after(successMsg);
+            
+            // Redirect after a short delay
+            setTimeout(() => {
+              window.location.href = '/visualizer?id=new';
+            }, 1500);
+          }
+        }, 200);
+      });
+      
+      // Mobile menu toggle
+      document.addEventListener('DOMContentLoaded', () => {
+        const mobileMenuButton = document.getElementById('mobile-menu-button');
+        const mobileMenu = document.getElementById('mobile-menu');
+        
+        if (mobileMenuButton && mobileMenu) {
+          mobileMenuButton.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+          });
+        }
+      });
+    </script>
+  <script>
+// 添加样式
+const bgStyle = document.createElement('style');
+bgStyle.textContent = `
+  .element-highlight {
+      outline: 2px solid #3b82f6 !important;
+      outline-offset: -2px !important;
+  }
+  .element-selecting * {
+      cursor: crosshair !important;
+  }
+  .component-tooltip {
+      position: fixed;
+      background: rgba(17, 24, 39, 0.9);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 0.375rem;
+      font-size: 0.875rem;
+      z-index: 2147483646;
+      pointer-events: none;
+      transition: all 0.05s linear;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(8px);
+  }
+  .component-highlight {
+      outline: 2px dashed #3b82f6 !important;
+      outline-offset: -2px !important;
+      background-color: rgba(59, 130, 246, 0.1) !important;
+      z-index: 2147483645 !important;
+      position: relative !important;
+  }
+`;
+document.head.appendChild(bgStyle);
+
+// A function to handle sending messages.
+function sendMessage(e) {
+  // Prevent any default browser behaviour.
+  e.preventDefault();
+
+  // Send a message to the receiver window.
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'URL_CHANGE',
+          url: window.location.href
+      }, '*');
+  }
+}
+
+// Add an event listener that will execute the sendMessage() function
+window.addEventListener('load', sendMessage);
+window.addEventListener("hashchange", sendMessage);
+window.addEventListener("popstate", sendMessage);
+
+// elementor selector script
+let currentHighlight = null;
+let isSelecting = false;
+
+// send message to parent window to notify that the iframe is ready
+function notifyReady() {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'IFRAME_READY',
+          url: window.location.href
+      }, '*');
+  }
+}
+
+// send message to parent window to report an error
+function reportError(message) {
+  if (window.parent !== window && window.top !== window) {
+      window.parent.postMessage({
+          type: 'SELECTOR_ERROR',
+          message: message
+      }, '*');
+  }
+}
+
+function getElementPath(element) {
+  try {
+      const path = [];
+      while (element && element.nodeType === Node.ELEMENT_NODE) {
+          let selector = element.nodeName.toLowerCase();
+          if (element.id) {
+              selector += '#' + element.id;
+          } else {
+              let nth = 1;
+              let sib = element;
+              while (sib.previousElementSibling) {
+                  if (sib.previousElementSibling.nodeName === element.nodeName) nth++;
+                  sib = sib.previousElementSibling;
+              }
+              if (nth !== 1) selector += ':nth-of-type(' + nth + ')';
+          }
+          path.unshift(selector);
+          element = element.parentNode;
+      }
+      return path.join(' > ');
+  } catch (error) {
+      reportError('Failed to get element path: ' + error.message);
+      return '';
+  }
+}
+
+function findComponentElement(element) {
+  let current = element;
+  while (current && current !== document.body) {
+      if (current.hasAttribute('data-buildglarecomponent')) {
+          return current;
+      }
+      current = current.parentElement;
+  }
+  return null;
+}
+
+function getElementInfo(element) {
+  try {
+      const info = {
+          selector: getElementPath(element),
+          elementId: element.id || null,
+          elementClasses: Array.from(element.classList) || [],
+          url: window.location.href
+      };
+      
+      // 查找最近的组件元素
+      const componentElement = findComponentElement(element);
+      if (componentElement) {
+          info.componentName = componentElement.getAttribute('data-buildglarecomponent');
+      }
+      
+      return info;
+  } catch (error) {
+      reportError('Failed to get element info: ' + error.message);
+      return null;
+  }
+}
+
+function handleMouseMove(e) {
+  try {
+      if (!isSelecting) return;
+      if (currentHighlight) {
+          currentHighlight.classList.remove('element-highlight');
+      }
+      currentHighlight = e.target;
+      e.target.classList.add('element-highlight');
+      e.preventDefault();
+      e.stopPropagation();
+  } catch (error) {
+      reportError('Mouse move error: ' + error.message);
+  }
+}
+
+function handleClick(e) {
+  try {
+      if (!isSelecting) return;
+      e.preventDefault();
+      e.stopPropagation();
+      
+      const elementInfo = getElementInfo(e.target);
+      if (elementInfo) {
+          window.parent.postMessage({
+              type: 'ELEMENT_SELECTED',
+              ...elementInfo
+          }, '*');
+      }
+      
+      disableElementSelector();
+  } catch (error) {
+      reportError('Click error: ' + error.message);
+  }
+}
+
+function enableElementSelector() {
+  try {
+      isSelecting = true;
+      document.body.classList.add('element-selecting');
+      document.addEventListener('mousemove', handleMouseMove, true);
+      document.addEventListener('click', handleClick, true);
+  } catch (error) {
+      reportError('Failed to enable selector: ' + error.message);
+  }
+}
+
+function disableElementSelector() {
+  try {
+      isSelecting = false;
+      document.removeEventListener('mousemove', handleMouseMove, true);
+      document.removeEventListener('click', handleClick, true);
+      if (currentHighlight) {
+          currentHighlight.classList.remove('element-highlight');
+          currentHighlight = null;
+      }
+      document.body.classList.remove('element-selecting');
+  } catch (error) {
+      reportError('Failed to disable selector: ' + error.message);
+  }
+}
+
+// listen for messages from parent window
+window.addEventListener('message', function(event) {
+  try {
+      if (event.data.type === 'START_ELEMENT_SELECTOR') {
+          enableElementSelector();
+      } else if (event.data.type === 'STOP_ELEMENT_SELECTOR') {
+          disableElementSelector();
+      } else if (event.data.type === 'CHECK_READY') {
+          window.parent.postMessage({
+              type: 'CHECK_READY_RESPONSE',
+              isReady: document.readyState === 'complete',
+              url: window.location.href
+          }, '*');
+      }
+  } catch (error) {
+      reportError('Message handling error: ' + error.message);
+  }
+});
+
+// notify parent window that the iframe is ready
+window.addEventListener('load', notifyReady);
+window.addEventListener('hashchange', notifyReady);
+window.addEventListener('popstate', notifyReady);
+
+// check if the iframe is ready and notify parent window
+if (document.readyState === 'complete') {
+  notifyReady();
+}
+
+// 创建组件提示工具 DOM
+let tooltip = document.createElement('div');
+tooltip.className = 'component-tooltip';
+tooltip.style.display = 'none';
+document.body.appendChild(tooltip);
+
+// 用于跟踪当前高亮的元素
+let currentComponentHighlight = null;
+
+// 处理鼠标移动
+const handleComponentMouseMove = (e) => {
+  if (isSelecting) return; // 如果正在使用元素选择器，不显示组件提示
+
+  let target = e.target;
+  
+  // 移除当前高亮
+  if (currentComponentHighlight) {
+      currentComponentHighlight.classList.remove('component-highlight');
+      currentComponentHighlight = null;
+  }
+  
+  // 查找最近的带有 data-buildglarecomponent 属性的祖先元素
+  while (target && target !== document.body) {
+      if (target.hasAttribute('data-buildglarecomponent')) {
+          // 添加高亮效果
+          target.classList.add('component-highlight');
+          currentComponentHighlight = target;
+          
+          // 更新提示工具位置和内容
+          tooltip.style.display = 'block';
+          
+          // 计算位置，确保提示框不会超出视口
+          const rect = target.getBoundingClientRect();
+          const tooltipX = Math.min(
+              e.clientX + 10, 
+              window.innerWidth - tooltip.offsetWidth - 10
+          );
+          const tooltipY = Math.min(
+              e.clientY + 10, 
+              window.innerHeight - tooltip.offsetHeight - 10
+          );
+          
+          tooltip.style.left = tooltipX + 'px';
+          tooltip.style.top = tooltipY + 'px';
+          tooltip.textContent = 'This is ' + target.getAttribute('data-buildglarecomponent') + ' component';
+          return;
+      }
+      target = target.parentElement;
+  }
+  
+  // 如果没有找到组件，隐藏提示工具
+  tooltip.style.display = 'none';
+};
+
+// 监听鼠标移动事件
+document.addEventListener('mousemove', handleComponentMouseMove);
+
+// 处理滚动事件
+const handleScroll = () => {
+  tooltip.style.display = 'none';
+  if (currentComponentHighlight) {
+      currentComponentHighlight.classList.remove('component-highlight');
+      currentComponentHighlight = null;
+  }
+};
+
+// 监听滚动事件
+document.addEventListener('scroll', handleScroll, true);
+window.addEventListener('scroll', handleScroll, true);
+
+// 监听窗口大小改变事件
+window.addEventListener('resize', handleScroll);
+</script>
+<div id="dev-warning-banner" class="fixed inset-x-0 top-0 z-[2147483647]">
+  <!-- Animated background -->
+  <div class="absolute inset-0 bg-gradient-to-r from-yellow-50 via-yellow-100 to-yellow-50 animate-gradient"></div>
+  
+  <!-- Main content -->
+  <div class="relative mx-auto max-w-7xl py-1.5 px-2 sm:px-4">
+    <div class="flex items-center justify-between gap-2">
+      <!-- Left side with warning icon and text -->
+      <div class="flex items-center gap-1.5 min-w-0">
+        <!-- Warning Icon -->
+        <span class="flex-shrink-0">
+          <svg class="h-4 w-4 text-amber-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </span>
+
+        <!-- Dev Mode Badge -->
+        <span class="flex-shrink-0 text-xs sm:text-sm font-medium text-amber-900">
+          <span class="rounded bg-amber-100 px-1 py-0.5 font-medium">DEV Mode</span>
+        </span>
+
+        <!-- Publish Text -->
+        <div class="flex items-center text-xs sm:text-sm text-amber-800 whitespace-nowrap overflow-hidden">
+          <span class="mx-1 hidden sm:inline">·</span>
+          <span class="inline-flex items-center gap-1">
+            <span class="hidden lg:inline">You're in development environment.</span>
+            <span class="hidden md:inline lg:inline">Please</span>
+            Click
+            <svg class="w-3.5 h-3.5 flex-shrink-0" xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke-width='1.5' stroke='currentColor'>
+              <path stroke-linecap='round' stroke-linejoin='round' d='M15.59 14.37a6 6 0 0 1-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 0 0 6.16-12.12A14.98 14.98 0 0 0 9.631 8.41m5.96 5.96a14.926 14.926 0 0 1-5.841 2.58m-.119-8.54a6 6 0 0 0-7.381 5.84h4.8m2.581-5.84a14.927 14.927 0 0 0-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 0 1-2.448-2.448 14.9 14.9 0 0 1 .06-.312m-2.24 2.39a4.493 4.493 0 0 0-1.757 4.306 4.493 4.493 0 0 0 4.306-1.758M16.5 9a1.5 1.5 0 1 1-3 0 1.5 1.5 0 0 1 3 0Z' />
+            </svg>
+            to publish
+            <span class="hidden lg:inline">to production</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Right side with checkbox and close button -->
+      <div class="flex items-center gap-2 flex-shrink-0">
+        <label class="flex items-center cursor-pointer">
+          <input type="checkbox" id="dev-warning-checkbox" class="h-3 w-3 rounded border-amber-300 text-amber-600 focus:ring-amber-600">
+          <span class="ml-1 text-xs text-amber-700 whitespace-nowrap">
+            <span class="hidden sm:inline">Don't show again</span>
+            <span class="inline sm:hidden">Don't show</span>
+          </span>
+        </label>
+        <button type="button" class="group p-0.5" onclick="closeBanner()" aria-label="Close banner">
+          <svg class="h-3.5 w-3.5 text-amber-600 group-hover:text-amber-700" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    @keyframes gradient {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
+    }
+    .animate-gradient {
+      background-size: 200% 200%;
+      animation: gradient 15s ease infinite;
+    }
+  </style>
+
+  <script>
+    // Check if banner should be hidden
+    if (localStorage.getItem('hideDevWarning') === 'true') {
+      document.getElementById('dev-warning-banner').style.display = 'none';
+    }
+
+    function closeBanner() {
+      const banner = document.getElementById('dev-warning-banner');
+      const checkbox = document.getElementById('dev-warning-checkbox');
+      
+      if (checkbox.checked) {
+        localStorage.setItem('hideDevWarning', 'true');
+      }
+      
+      banner.style.opacity = '0';
+      banner.style.transform = 'translateY(-100%)';
+      banner.style.transition = 'all 0.3s ease-out';
+      
+      setTimeout(() => {
+        banner.style.display = 'none';
+      }, 300);
+    }
+  </script>
+</div>
+<a href="https://www.buildglare.com" 
+   target="_blank" 
+   rel="noopener" 
+   class="fixed bottom-4 right-4 z-10 flex items-center gap-1.5 py-1.5 px-2.5 rounded-full text-xs font-medium bg-white/80 backdrop-blur-sm shadow-sm border border-slate-200/40 text-slate-600 transition-all duration-300 hover:translate-y-[-1px] group">
+  <span class="font-light">Built on</span>
+  <span class="bg-clip-text text-transparent bg-gradient-to-r from-sky-500 to-violet-500 font-semibold tracking-wide">
+    Buildglare
+  </span>
+</a>
+</body>
+</html>
