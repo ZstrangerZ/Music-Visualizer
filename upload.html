@@ -1,1171 +1,2253 @@
 
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Upload Music | SoundWave AI</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="icon" type="image/x-icon" href="https://ico.buildglarecontent.com/music-visualizer/favicon.ico">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
-    <script>
-      tailwind.config = {
-        theme: {
-          extend: {
-            colors: {
-              primary: {
-                50: '#f0f9ff',
-                100: '#e0f2fe',
-                200: '#bae6fd',
-                300: '#7dd3fc',
-                400: '#38bdf8',
-                500: '#0ea5e9',
-                600: '#0284c7',
-                700: '#0369a1',
-                800: '#075985',
-                900: '#0c4a6e',
-              },
-              accent: {
-                500: '#8b5cf6',
-                600: '#7c3aed',
-                700: '#6d28d9',
+      <!DOCTYPE html>
+      <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Upload Music | SoundWave AI</title>
+          <script src="https://cdn.tailwindcss.com"></script>
+          <link rel="icon" type="image/x-icon" href="https://ico.buildglarecontent.com/music-visualizer/favicon.ico">
+          <script src="https://cdn.jsdelivr.net/npm/three@0.132.2/build/three.min.js"></script>
+          <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+          <script>
+            tailwind.config = {
+              theme: {
+                extend: {
+                  colors: {
+                    primary: {
+                      50: '#f0f9ff',
+                      100: '#e0f2fe',
+                      200: '#bae6fd',
+                      300: '#7dd3fc',
+                      400: '#38bdf8',
+                      500: '#0ea5e9',
+                      600: '#0284c7',
+                      700: '#0369a1',
+                      800: '#075985',
+                      900: '#0c4a6e',
+                    },
+                    accent: {
+                      500: '#8b5cf6',
+                      600: '#7c3aed',
+                      700: '#6d28d9',
+                    }
+                  },
+                  animation: {
+                    'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    'bounce-slow': 'bounce 3s infinite',
+                  }
+                }
               }
-            },
-            animation: {
-              'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-              'bounce-slow': 'bounce 3s infinite',
             }
-          }
+          </script>
+          <style>
+            body {
+              font-family: 'Inter', sans-serif;
+            }
+            
+            .file-drop-area {
+              position: relative;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              width: 100%;
+              max-width: 100%;
+              padding: 2rem 1rem;
+              border: 2px dashed;
+              border-radius: 1rem;
+              transition: 0.2s;
+            }
+            
+            .file-drop-area.is-active {
+              background-color: rgba(14, 165, 233, 0.05);
+              border-color: rgba(14, 165, 233, 0.8);
+            }
+            
+            .fake-btn {
+              flex-shrink: 0;
+              background-color: rgba(255, 255, 255, 0.04);
+              border: 1px solid rgba(255, 255, 255, 0.1);
+              border-radius: 3px;
+              padding: 8px 15px;
+              margin-right: 10px;
+              font-size: 12px;
+              text-transform: uppercase;
+            }
+            
+            .file-msg {
+              font-size: 16px;
+              font-weight: 300;
+              line-height: 1.4;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            
+            .file-input {
+              position: absolute;
+              left: 0;
+              top: 0;
+              height: 100%;
+              width: 100%;
+              cursor: pointer;
+              opacity: 0;
+            }
+            
+            .file-input:focus {
+              outline: none;
+            }
+            
+            .streaming-service-button {
+              transition: all 0.3s ease;
+            }
+            
+            .streaming-service-button:hover {
+              transform: translateY(-5px);
+              box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            }
+            
+            .upload-track-row {
+              transition: all 0.2s ease;
+            }
+            
+            .upload-track-row:hover .track-actions {
+              opacity: 1;
+            }
+            
+            .track-actions {
+              opacity: 0.7;
+              transition: opacity 0.2s ease;
+            }
+            
+            @keyframes wave {
+              0% { transform: translateY(0); }
+              50% { transform: translateY(-5px); }
+              100% { transform: translateY(0); }
+            }
+            
+            .wave-animation > * {
+              animation: wave 1.5s infinite;
+            }
+            
+            .wave-animation > *:nth-child(1) { animation-delay: 0s; }
+            .wave-animation > *:nth-child(2) { animation-delay: 0.1s; }
+            .wave-animation > *:nth-child(3) { animation-delay: 0.2s; }
+            .wave-animation > *:nth-child(4) { animation-delay: 0.3s; }
+            .wave-animation > *:nth-child(5) { animation-delay: 0.4s; }
+            
+            .tab-active {
+              color: white;
+              border-color: #0ea5e9;
+            }
+            
+            .tab-inactive {
+              color: #9ca3af;
+              border-color: transparent;
+            }
+            
+            .tab-content {
+              display: none;
+            }
+            
+            .tab-content.active {
+              display: block;
+            }
+            
+            .visualizer-container {
+              position: relative;
+              width: 100%;
+              height: 200px;
+              overflow: hidden;
+              background: linear-gradient(180deg, #000000 0%, #0c0c1d 100%);
+              border-radius: 1rem;
+              margin-top: 1.5rem;
+            }
+            
+            .visualizer-container.expanded {
+              position: fixed;
+              top: 0;
+              left: 0;
+              right: 0;
+              bottom: 0;
+              height: 100vh;
+              width: 100vw;
+              z-index: 50;
+              border-radius: 0;
+            }
+            
+            .audio-controls {
+              position: absolute;
+              bottom: 0;
+              left: 0;
+              right: 0;
+              background: rgba(0, 0, 0, 0.7);
+              backdrop-filter: blur(10px);
+              padding: 0.75rem;
+              display: flex;
+              align-items: center;
+            }
+            
+            .progress-bar {
+              height: 4px;
+              background: rgba(255, 255, 255, 0.2);
+              cursor: pointer;
+              position: relative;
+              flex-grow: 1;
+            }
+            
+            .progress-bar .progress {
+              height: 100%;
+              background: linear-gradient(90deg, #0ea5e9, #8b5cf6);
+              position: relative;
+            }
+            
+            .progress-bar .progress-handle {
+              width: 12px;
+              height: 12px;
+              border-radius: 50%;
+              background: white;
+              position: absolute;
+              top: 50%;
+              right: 0;
+              transform: translate(50%, -50%);
+              cursor: pointer;
+            }
+            
+            .blob {
+              position: absolute;
+              border-radius: 50%;
+              filter: blur(60px);
+              z-index: -1;
+              opacity: 0.3;
+            }
+            
+            .blob-animation {
+              animation: pulse-slow 8s ease-in-out infinite;
+            }
+            
+            @keyframes pulse-slow {
+              0%, 100% {
+                opacity: 0.3;
+              }
+              50% {
+                opacity: 0.5;
+              }
+            }
+            
+            .bar {
+              width: 4px;
+              margin: 0 2px;
+              background: linear-gradient(to top, #0ea5e9, #8b5cf6);
+              border-radius: 2px;
+              animation: none;
+            }
+            
+            .audio-visualizer-placeholder .bar {
+              animation: wave 1.2s infinite ease-in-out;
+            }
+            
+            .audio-visualizer-placeholder .bar:nth-child(2) { animation-delay: 0.1s; }
+            .audio-visualizer-placeholder .bar:nth-child(3) { animation-delay: 0.2s; }
+            .audio-visualizer-placeholder .bar:nth-child(4) { animation-delay: 0.3s; }
+            .audio-visualizer-placeholder .bar:nth-child(5) { animation-delay: 0.4s; }
+            .audio-visualizer-placeholder .bar:nth-child(6) { animation-delay: 0.5s; }
+            .audio-visualizer-placeholder .bar:nth-child(7) { animation-delay: 0.6s; }
+            .audio-visualizer-placeholder .bar:nth-child(8) { animation-delay: 0.7s; }
+            
+            .expand-btn {
+              position: absolute;
+              top: 10px;
+              right: 10px;
+              background: rgba(0, 0, 0, 0.5);
+              border-radius: 50%;
+              width: 32px;
+              height: 32px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              z-index: 2;
+            }
+            
+            .close-btn {
+              position: absolute;
+              top: 20px;
+              right: 20px;
+              background: rgba(0, 0, 0, 0.5);
+              border-radius: 50%;
+              width: 40px;
+              height: 40px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              cursor: pointer;
+              z-index: 2;
+              display: none;
+            }
+            
+            .visualizer-container.expanded .close-btn {
+              display: flex;
+            }
+            
+            .visualizer-container.expanded .expand-btn {
+              display: none;
+            }
+            
+            .audio-info {
+              position: absolute;
+              top: 20px;
+              left: 20px;
+              z-index: 2;
+            }
+            
+            .audio-visualizer-container {
+              position: relative;
+              width: 100%;
+              height: 100%;
+            }
+            
+            .visualization-type-selector {
+              position: absolute;
+              top: 10px;
+              left: 10px;
+              z-index: 10;
+              background: rgba(0, 0, 0, 0.5);
+              border-radius: 20px;
+              padding: 5px 10px;
+              display: flex;
+              gap: 5px;
+            }
+            
+            .visualization-type {
+              padding: 5px 10px;
+              border-radius: 15px;
+              font-size: 0.8rem;
+              cursor: pointer;
+              transition: all 0.2s ease;
+            }
+            
+            .visualization-type.active {
+              background: rgba(14, 165, 233, 0.5);
+              color: white;
+            }
+            
+            .visualization-type:hover:not(.active) {
+              background: rgba(255, 255, 255, 0.1);
+            }
+            
+            .loading-spinner {
+              display: inline-block;
+              width: 20px;
+              height: 20px;
+              border: 3px solid rgba(255, 255, 255, 0.3);
+              border-radius: 50%;
+              border-top-color: white;
+              animation: spin 1s ease-in-out infinite;
+            }
+            
+            @keyframes spin {
+              to { transform: rotate(360deg); }
+            }
+          </style>
+        <script>
+    const originalConsoleError = console.error;
+    const version = Math.random().toString(36).slice(-8);
+    console.error = function(...args) {
+        if (!args || args.length === 0) return;
+        originalConsoleError.apply(console, args);
+        
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'CONSOLE_ERROR',
+                version: version,
+                error: args.join(' ')
+            }, '*');
         }
-      }
-    </script>
-    <style>
-      body {
-        font-family: 'Inter', sans-serif;
-      }
-      
-      .file-drop-area {
-        position: relative;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 100%;
-        max-width: 100%;
-        padding: 2rem 1rem;
-        border: 2px dashed;
-        border-radius: 1rem;
-        transition: 0.2s;
-      }
-      
-      .file-drop-area.is-active {
-        background-color: rgba(14, 165, 233, 0.05);
-        border-color: rgba(14, 165, 233, 0.8);
-      }
-      
-      .fake-btn {
-        flex-shrink: 0;
-        background-color: rgba(255, 255, 255, 0.04);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-        border-radius: 3px;
-        padding: 8px 15px;
-        margin-right: 10px;
-        font-size: 12px;
-        text-transform: uppercase;
-      }
-      
-      .file-msg {
-        font-size: 16px;
-        font-weight: 300;
-        line-height: 1.4;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-      
-      .file-input {
-        position: absolute;
-        left: 0;
-        top: 0;
-        height: 100%;
-        width: 100%;
-        cursor: pointer;
-        opacity: 0;
-      }
-      
-      .file-input:focus {
-        outline: none;
-      }
-      
-      .streaming-service-button {
-        transition: all 0.3s ease;
-      }
-      
-      .streaming-service-button:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-      }
-      
-      .upload-track-row {
-        transition: all 0.2s ease;
-      }
-      
-      .upload-track-row:hover .track-actions {
-        opacity: 1;
-      }
-      
-      .track-actions {
-        opacity: 0.7;
-        transition: opacity 0.2s ease;
-      }
-      
-      @keyframes wave {
-        0% { transform: translateY(0); }
-        50% { transform: translateY(-5px); }
-        100% { transform: translateY(0); }
-      }
-      
-      .wave-animation > * {
-        animation: wave 1.5s infinite;
-      }
-      
-      .wave-animation > *:nth-child(1) { animation-delay: 0s; }
-      .wave-animation > *:nth-child(2) { animation-delay: 0.1s; }
-      .wave-animation > *:nth-child(3) { animation-delay: 0.2s; }
-      .wave-animation > *:nth-child(4) { animation-delay: 0.3s; }
-      .wave-animation > *:nth-child(5) { animation-delay: 0.4s; }
-      
-      .tab-active {
-        color: white;
-        border-color: #0ea5e9;
-      }
-      
-      .tab-inactive {
-        color: #9ca3af;
-        border-color: transparent;
-      }
-      
-      .tab-content {
-        display: none;
-      }
-      
-      .tab-content.active {
-        display: block;
-      }
-    </style>
-  <script>
-const originalConsoleError = console.error;
-const version = Math.random().toString(36).slice(-8);
-console.error = function(...args) {
-  if (!args || args.length === 0) return;
-  originalConsoleError.apply(console, args);
-  
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'CONSOLE_ERROR',
-          version: version,
-          error: args.join(' ')
-      }, '*');
-  }
-};
+    };
 
-window.addEventListener('unhandledrejection', function(event) {
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'CONSOLE_ERROR',
-          version: version,
-          error: 'Unhandled Promise Rejection: ' + event.reason
-      }, '*');
-  }
-});
+    window.addEventListener('unhandledrejection', function(event) {
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'CONSOLE_ERROR',
+                version: version,
+                error: 'Unhandled Promise Rejection: ' + event.reason
+            }, '*');
+        }
+    });
 
-window.addEventListener('error', function(event) {
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'CONSOLE_ERROR',
-          version: version,
-          error: event.message
-      }, '*');
-  }
-});
+    window.addEventListener('error', function(event) {
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'CONSOLE_ERROR',
+                version: version,
+                error: event.message
+            }, '*');
+        }
+    });
 
-// refresh the error status
-window.addEventListener('load', function() {
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'CONSOLE_ERROR',
-          version: version,
-          error: null
-      }, '*');
-  }
-});
+    // refresh the error status
+    window.addEventListener('load', function() {
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'CONSOLE_ERROR',
+                version: version,
+                error: null
+            }, '*');
+        }
+    });
 </script>
 </head>
-  <body class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
-    
-<!-- Header -->
-<header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
-  <div class="container mx-auto px-4 py-4 flex items-center justify-between">
-    <div class="flex items-center space-x-2">
-      <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
-        <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
-          <div class="w-6 h-6 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
-            <div class="w-2 h-4 bg-white rounded-full"></div>
-          </div>
-        </div>
-      </div>
-      <a href="/" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</a>
-    </div>
-    
-    <nav class="hidden md:flex items-center space-x-8">
-      <a href="index.html" class="text-white hover:text-primary-300 transition-colors">Home</a>
-      <a href="visualizer.html" class="text-white hover:text-primary-300 transition-colors">Visualizer</a>
-      <a href="upload.html" class="text-white hover:text-primary-300 transition-colors">Upload Music</a>
-      <a href="#" class="text-white hover:text-primary-300 transition-colors">About</a>
-    </nav>
-    
-    <div class="flex items-center space-x-4">
-      <a href="upload.html" class="hidden md:block px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium">
-        Get Started
-      </a>
-      <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
-        </svg>
-      </button>
-    </div>
-  </div>
-  
-  <!-- Mobile Navigation (Hidden by default) -->
-  <div class="md:hidden hidden bg-gray-900 bg-opacity-95" id="mobile-menu">
-    <div class="container mx-auto px-4 py-4">
-      <nav class="flex flex-col space-y-4">
-        <a href="index.html" class="text-white hover:text-primary-300 transition-colors py-2">Home</a>
-        <a href="visualizer.html" class="text-white hover:text-primary-300 transition-colors py-2">Visualizer</a>
-        <a href="upload.html" class="text-white hover:text-primary-300 transition-colors py-2">Upload Music</a>
-        <a href="#" class="text-white hover:text-primary-300 transition-colors py-2">About</a>
-        <a href="upload.html" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium text-center">
-          Get Started
-        </a>
-      </nav>
-    </div>
-  </div>
-</header>
-
-<script>
-  // Mobile menu toggle
-  document.addEventListener('DOMContentLoaded', () => {
-    const mobileMenuButton = document.getElementById('mobile-menu-button');
-    const mobileMenu = document.getElementById('mobile-menu');
-    
-    if (mobileMenuButton && mobileMenu) {
-      mobileMenuButton.addEventListener('click', () => {
-        mobileMenu.classList.toggle('hidden');
-      });
-    }
-  });
-</script>
-
-    
-    <!-- Main Content -->
-    <main class="container mx-auto px-4 pt-32 pb-20">
-      <div class="max-w-5xl mx-auto">
-        <h1 class="text-4xl md:text-5xl font-bold mb-8 text-center">
-          <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">
-            Upload Your Music
-          </span>
-        </h1>
-        
-        <p class="text-xl text-center text-gray-300 mb-10 max-w-3xl mx-auto">
-          Upload your audio files or connect to streaming services to create stunning AI-powered visualizations
-        </p>
-        
-        <!-- Tabs -->
-        <div class="mb-8 flex justify-center">
-          <div class="border-b border-gray-700 flex">
-            <button class="px-6 py-3 font-medium border-b-2 tab-active" id="tab-upload">Upload Files</button>
-            <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-streaming">Streaming Services</button>
-            <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-library">My Library</button>
-          </div>
-        </div>
-        
-        <!-- Upload Files Tab -->
-        <div class="tab-content active" id="content-upload">
-          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
-            <h2 class="text-2xl font-semibold mb-6">Upload Audio Files</h2>
-            
-            <!-- File Upload Area -->
-            <div class="file-drop-area border-primary-400 text-primary-300 mb-6">
-              <span class="fake-btn">Choose files</span>
-              <span class="file-msg">or drag and drop audio files here</span>
-              <input class="file-input" type="file" accept="audio/*" multiple>
-            </div>
-            
-            <!-- Upload Progress (Initially Hidden) -->
-            <div class="hidden mb-6" id="upload-progress">
-              <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium">Uploading...</span>
-                <span class="text-sm font-medium" id="upload-percentage">0%</span>
-              </div>
-              <div class="w-full bg-gray-700 rounded-full h-2.5">
-                <div class="bg-gradient-to-r from-primary-500 to-accent-500 h-2.5 rounded-full" id="upload-progress-bar" style="width: 0%"></div>
-              </div>
-            </div>
-            
-            <!-- Upload Options -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-              <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
-                <h3 class="font-medium mb-2">Audio Quality</h3>
-                <div class="flex items-center space-x-4">
-                  <label class="flex items-center">
-                    <input type="radio" name="quality" value="standard" class="mr-2 text-primary-500" checked>
-                    <span>Standard</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" name="quality" value="high" class="mr-2 text-primary-500">
-                    <span>High</span>
-                  </label>
-                </div>
-              </div>
-              
-              <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
-                <h3 class="font-medium mb-2">Privacy</h3>
-                <div class="flex items-center space-x-4">
-                  <label class="flex items-center">
-                    <input type="radio" name="privacy" value="public" class="mr-2 text-primary-500" checked>
-                    <span>Public</span>
-                  </label>
-                  <label class="flex items-center">
-                    <input type="radio" name="privacy" value="private" class="mr-2 text-primary-500">
-                    <span>Private</span>
-                  </label>
+        <body class="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black text-white">
+          <div data-buildglarecomponent="header">
+      <!-- Header -->
+      <header class="fixed top-0 left-0 right-0 z-50 bg-black bg-opacity-50 backdrop-blur-md">
+        <div class="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+              <div class="w-8 h-8 rounded-full bg-gray-900 flex items-center justify-center">
+                <div class="w-6 h-6 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+                  <div class="w-2 h-4 bg-white rounded-full"></div>
                 </div>
               </div>
             </div>
-            
-            <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
-              <button class="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors">
-                Cancel
-              </button>
-              <button class="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 rounded-lg transition-all" id="upload-button">
-                Upload & Visualize
-              </button>
-            </div>
+            <a href="/" class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</a>
           </div>
           
-          <!-- Upload Tips -->
-          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
-            <h2 class="text-2xl font-semibold mb-6">Upload Tips</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div class="flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
-                  </svg>
-                </div>
-                <h3 class="font-medium mb-2">Supported Formats</h3>
-                <p class="text-gray-400 text-sm">We support MP3, WAV, FLAC, and OGG audio formats for the best visualization results.</p>
-              </div>
-              
-              <div class="flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <h3 class="font-medium mb-2">Duration Limit</h3>
-                <p class="text-gray-400 text-sm">For best performance, upload songs under 10 minutes. Longer tracks may take more time to process.</p>
-              </div>
-              
-              <div class="flex flex-col items-center text-center">
-                <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
-                </div>
-                <h3 class="font-medium mb-2">Better Visualization</h3>
-                <p class="text-gray-400 text-sm">Songs with clear beats and dynamic range create the most impressive visual experiences.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- Streaming Services Tab -->
-        <div class="tab-content" id="content-streaming">
-          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
-            <h2 class="text-2xl font-semibold mb-6">Connect Streaming Services</h2>
-            <p class="text-gray-400 mb-8">Connect your favorite streaming services to import your playlists and favorite tracks directly.</p>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              
-                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Spotify_icon.svg/1982px-Spotify_icon.svg.png" alt="Spotify" class="w-16 h-16 object-contain mb-4">
-                  <span class="font-medium">Spotify</span>
-                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
-                </button>
-              
-                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png" alt="Apple Music" class="w-16 h-16 object-contain mb-4">
-                  <span class="font-medium">Apple Music</span>
-                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
-                </button>
-              
-                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Youtube_Music_icon.svg/2048px-Youtube_Music_icon.svg.png" alt="YouTube Music" class="w-16 h-16 object-contain mb-4">
-                  <span class="font-medium">YouTube Music</span>
-                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
-                </button>
-              
-                <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Soundcloud_logo.svg/2560px-Soundcloud_logo.svg.png" alt="SoundCloud" class="w-16 h-16 object-contain mb-4">
-                  <span class="font-medium">SoundCloud</span>
-                  <span class="text-xs text-gray-400 mt-1">Connect account</span>
-                </button>
-              
-            </div>
-          </div>
+          <nav class="hidden md:flex items-center space-x-8">
+            <a href="/" class="text-white hover:text-primary-300 transition-colors">Home</a>
+            <a href="/visualizer" class="text-white hover:text-primary-300 transition-colors">Visualizer</a>
+            <a href="/upload" class="text-white hover:text-primary-300 transition-colors">Upload Music</a>
+            <a href="#" class="text-white hover:text-primary-300 transition-colors">About</a>
+          </nav>
           
-          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
-            <h2 class="text-2xl font-semibold mb-6">Streaming Benefits</h2>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div class="flex space-x-4">
-                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="font-medium mb-1">Access Your Library</h3>
-                  <p class="text-gray-400 text-sm">Easily access all your playlists and favorite tracks without having to upload files.</p>
-                </div>
-              </div>
-              
-              <div class="flex space-x-4">
-                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="font-medium mb-1">Discover New Visuals</h3>
-                  <p class="text-gray-400 text-sm">Our AI analyzes your music preferences to create personalized visualization styles.</p>
-                </div>
-              </div>
-              
-              <div class="flex space-x-4">
-                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="font-medium mb-1">Sync Across Devices</h3>
-                  <p class="text-gray-400 text-sm">Your visualizations and preferences sync across all your devices automatically.</p>
-                </div>
-              </div>
-              
-              <div class="flex space-x-4">
-                <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <div>
-                  <h3 class="font-medium mb-1">Premium Features</h3>
-                  <p class="text-gray-400 text-sm">Connected accounts get access to exclusive visualization styles and effects.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <!-- My Library Tab -->
-        <div class="tab-content" id="content-library">
-          <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="text-2xl font-semibold">My Music Library</h2>
-              <div class="flex space-x-2">
-                <div class="relative">
-                  <input type="text" placeholder="Search library..." class="py-2 px-4 pr-10 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                </div>
-                <select class="py-2 px-4 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
-                  <option value="recent">Recently Added</option>
-                  <option value="name">Name</option>
-                  <option value="artist">Artist</option>
-                  <option value="duration">Duration</option>
-                </select>
-              </div>
-            </div>
-            
-            <div class="overflow-x-auto">
-              <table class="w-full text-left">
-                <thead class="text-xs uppercase text-gray-400 border-b border-gray-700">
-                  <tr>
-                    <th scope="col" class="px-4 py-3">Track</th>
-                    <th scope="col" class="px-4 py-3">Duration</th>
-                    <th scope="col" class="px-4 py-3">Added</th>
-                    <th scope="col" class="px-4 py-3">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-3">
-                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music1/300/300" alt="Summer Vibes">
-                          <div>
-                            <div class="font-medium">Summer Vibes</div>
-                            <div class="text-sm text-gray-400">Chill Wave</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">3:45</td>
-                      <td class="px-4 py-3">2025-06-15</td>
-                      <td class="px-4 py-3">
-                        <div class="flex space-x-2 track-actions">
-                          <a href="/visualizer?id=1" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
-                            Visualize
-                          </a>
-                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-3">
-                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music2/300/300" alt="Electric Dreams">
-                          <div>
-                            <div class="font-medium">Electric Dreams</div>
-                            <div class="text-sm text-gray-400">Synth Master</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">4:20</td>
-                      <td class="px-4 py-3">2025-06-14</td>
-                      <td class="px-4 py-3">
-                        <div class="flex space-x-2 track-actions">
-                          <a href="/visualizer?id=2" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
-                            Visualize
-                          </a>
-                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-3">
-                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music3/300/300" alt="Ocean Breeze">
-                          <div>
-                            <div class="font-medium">Ocean Breeze</div>
-                            <div class="text-sm text-gray-400">Nature Sounds</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">5:12</td>
-                      <td class="px-4 py-3">2025-06-12</td>
-                      <td class="px-4 py-3">
-                        <div class="flex space-x-2 track-actions">
-                          <a href="/visualizer?id=3" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
-                            Visualize
-                          </a>
-                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-3">
-                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music4/300/300" alt="Midnight Jazz">
-                          <div>
-                            <div class="font-medium">Midnight Jazz</div>
-                            <div class="text-sm text-gray-400">Smooth Quartet</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">6:05</td>
-                      <td class="px-4 py-3">2025-06-10</td>
-                      <td class="px-4 py-3">
-                        <div class="flex space-x-2 track-actions">
-                          <a href="/visualizer?id=4" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
-                            Visualize
-                          </a>
-                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  
-                    <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
-                      <td class="px-4 py-3">
-                        <div class="flex items-center space-x-3">
-                          <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music5/300/300" alt="Urban Rhythm">
-                          <div>
-                            <div class="font-medium">Urban Rhythm</div>
-                            <div class="text-sm text-gray-400">City Beats</div>
-                          </div>
-                        </div>
-                      </td>
-                      <td class="px-4 py-3">3:28</td>
-                      <td class="px-4 py-3">2025-06-08</td>
-                      <td class="px-4 py-3">
-                        <div class="flex space-x-2 track-actions">
-                          <a href="visualizer.html" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
-                            Visualize
-                          </a>
-                          <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  
-                </tbody>
-              </table>
-            </div>
-            
-            <div class="mt-6 flex justify-between items-center">
-              <div class="text-sm text-gray-400">
-                Showing 5 of 24 tracks
-              </div>
-              <div class="flex space-x-2">
-                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-                  </svg>
-                </button>
-                <button class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">1</button>
-                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">2</button>
-                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">3</button>
-                <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </main>
-    
-    
-<!-- Footer -->
-<footer class="bg-gray-900 py-12">
-  <div class="container mx-auto px-4">
-    <div class="flex flex-col md:flex-row justify-between items-center">
-      <div class="flex items-center space-x-2 mb-6 md:mb-0">
-        <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
-          <div class="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
-            <div class="w-4 h-4 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
-              <div class="w-1.5 h-3 bg-white rounded-full"></div>
-            </div>
-          </div>
-        </div>
-        <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</span>
-      </div>
-      
-      <nav class="flex flex-wrap justify-center space-x-8 mb-6 md:mb-0">
-        <a href="index.html" class="text-gray-400 hover:text-primary-300 transition-colors">Home</a>
-        <a href="visualizer.html" class="text-gray-400 hover:text-primary-300 transition-colors">Visualizer</a>
-        <a href="upload.html" class="text-gray-400 hover:text-primary-300 transition-colors">Upload</a>
-        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">About</a>
-      </nav>
-      
-      <div class="flex space-x-4">
-        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
-          </svg>
-        </a>
-        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd" />
-          </svg>
-        </a>
-        <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
-          <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
-          </svg>
-        </a>
-      </div>
-    </div>
-    
-    <div class="border-t border-gray-800 mt-8 pt-8 text-center">
-      <p class="text-gray-500 text-sm">
-        &copy; 2025 SoundWave AI. All rights reserved.
-      </p>
-    </div>
-  </div>
-</footer>
-
-    
-    <script>
-      // Tab switching
-      document.addEventListener('DOMContentLoaded', function() {
-        const tabs = document.querySelectorAll('[id^="tab-"]');
-        const contents = document.querySelectorAll('[id^="content-"]');
-        
-        tabs.forEach(tab => {
-          tab.addEventListener('click', () => {
-            // Remove active class from all tabs and contents
-            tabs.forEach(t => {
-              t.classList.remove('tab-active');
-              t.classList.add('tab-inactive');
-            });
-            contents.forEach(c => c.classList.remove('active'));
-            
-            // Add active class to clicked tab and corresponding content
-            tab.classList.add('tab-active');
-            tab.classList.remove('tab-inactive');
-            
-            const contentId = 'content-' + tab.id.split('-')[1];
-            document.getElementById(contentId).classList.add('active');
-          });
-        });
-      });
-      
-      // File upload interaction
-      const $fileInput = document.querySelector('.file-input');
-      const $fileDropArea = document.querySelector('.file-drop-area');
-      const $fileMsg = document.querySelector('.file-msg');
-      const $uploadButton = document.getElementById('upload-button');
-      const $uploadProgress = document.getElementById('upload-progress');
-      const $uploadProgressBar = document.getElementById('upload-progress-bar');
-      const $uploadPercentage = document.getElementById('upload-percentage');
-      
-      $fileInput.addEventListener('change', function() {
-        if (this.files && this.files.length) {
-          $fileMsg.textContent = `${this.files.length} file${this.files.length !== 1 ? 's' : ''} selected`;
-          $fileMsg.classList.add('font-medium');
-          $fileDropArea.classList.add('border-primary-500');
-        }
-      });
-      
-      ['dragover', 'dragenter'].forEach(eventName => {
-        $fileDropArea.addEventListener(eventName, e => {
-          e.preventDefault();
-          e.stopPropagation();
-          $fileDropArea.classList.add('is-active');
-        }, false);
-      });
-      
-      ['dragleave', 'dragend', 'drop'].forEach(eventName => {
-        $fileDropArea.addEventListener(eventName, e => {
-          e.preventDefault();
-          e.stopPropagation();
-          $fileDropArea.classList.remove('is-active');
-        }, false);
-      });
-      
-      $fileDropArea.addEventListener('drop', e => {
-        $fileInput.files = e.dataTransfer.files;
-        if ($fileInput.files.length) {
-          $fileMsg.textContent = `${$fileInput.files.length} file${$fileInput.files.length !== 1 ? 's' : ''} selected`;
-          $fileMsg.classList.add('font-medium');
-          $fileDropArea.classList.add('border-primary-500');
-        }
-      }, false);
-      
-      // Mock upload process
-      $uploadButton.addEventListener('click', () => {
-        if (!$fileInput.files.length) {
-          alert('Please select files to upload');
-          return;
-        }
-        
-        $uploadProgress.classList.remove('hidden');
-        
-        // Simulate upload process with progress
-        let progress = 0;
-        const interval = setInterval(() => {
-          progress += Math.floor(Math.random() * 10) + 1;
-          if (progress > 100) progress = 100;
-          
-          $uploadProgressBar.style.width = `${progress}%`;
-          $uploadPercentage.textContent = `${progress}%`;
-          
-          if (progress === 100) {
-            clearInterval(interval);
-            
-            // Add success message
-            const successMsg = document.createElement('div');
-            successMsg.className = 'flex items-center space-x-2 text-green-400 mt-2';
-            successMsg.innerHTML = `
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          <div class="flex items-center space-x-4">
+            <a href="/upload" class="hidden md:block px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium">
+              Get Started
+            </a>
+            <button class="md:hidden text-white focus:outline-none" id="mobile-menu-button">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
               </svg>
-              <span>Upload complete! Preparing visualization...</span>
-            `;
-            $uploadProgress.after(successMsg);
-            
-            // Redirect after a short delay
-            setTimeout(() => {
-              window.location.href = '/visualizer?id=new';
-            }, 1500);
-          }
-        }, 200);
-      });
-      
-      // Mobile menu toggle
-      document.addEventListener('DOMContentLoaded', () => {
-        const mobileMenuButton = document.getElementById('mobile-menu-button');
-        const mobileMenu = document.getElementById('mobile-menu');
+            </button>
+          </div>
+        </div>
         
-        if (mobileMenuButton && mobileMenu) {
-          mobileMenuButton.addEventListener('click', () => {
-            mobileMenu.classList.toggle('hidden');
-          });
-        }
-      });
-    </script>
-  <script>
-// 添加样式
-const bgStyle = document.createElement('style');
-bgStyle.textContent = `
-  .element-highlight {
-      outline: 2px solid #3b82f6 !important;
-      outline-offset: -2px !important;
-  }
-  .element-selecting * {
-      cursor: crosshair !important;
-  }
-  .component-tooltip {
-      position: fixed;
-      background: rgba(17, 24, 39, 0.9);
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 0.375rem;
-      font-size: 0.875rem;
-      z-index: 2147483646;
-      pointer-events: none;
-      transition: all 0.05s linear;
-      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(8px);
-  }
-  .component-highlight {
-      outline: 2px dashed #3b82f6 !important;
-      outline-offset: -2px !important;
-      background-color: rgba(59, 130, 246, 0.1) !important;
-      z-index: 2147483645 !important;
-      position: relative !important;
-  }
-`;
-document.head.appendChild(bgStyle);
-
-// A function to handle sending messages.
-function sendMessage(e) {
-  // Prevent any default browser behaviour.
-  e.preventDefault();
-
-  // Send a message to the receiver window.
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'URL_CHANGE',
-          url: window.location.href
-      }, '*');
-  }
-}
-
-// Add an event listener that will execute the sendMessage() function
-window.addEventListener('load', sendMessage);
-window.addEventListener("hashchange", sendMessage);
-window.addEventListener("popstate", sendMessage);
-
-// elementor selector script
-let currentHighlight = null;
-let isSelecting = false;
-
-// send message to parent window to notify that the iframe is ready
-function notifyReady() {
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'IFRAME_READY',
-          url: window.location.href
-      }, '*');
-  }
-}
-
-// send message to parent window to report an error
-function reportError(message) {
-  if (window.parent !== window && window.top !== window) {
-      window.parent.postMessage({
-          type: 'SELECTOR_ERROR',
-          message: message
-      }, '*');
-  }
-}
-
-function getElementPath(element) {
-  try {
-      const path = [];
-      while (element && element.nodeType === Node.ELEMENT_NODE) {
-          let selector = element.nodeName.toLowerCase();
-          if (element.id) {
-              selector += '#' + element.id;
-          } else {
-              let nth = 1;
-              let sib = element;
-              while (sib.previousElementSibling) {
-                  if (sib.previousElementSibling.nodeName === element.nodeName) nth++;
-                  sib = sib.previousElementSibling;
-              }
-              if (nth !== 1) selector += ':nth-of-type(' + nth + ')';
+        <!-- Mobile Navigation (Hidden by default) -->
+        <div class="md:hidden hidden bg-gray-900 bg-opacity-95" id="mobile-menu">
+          <div class="container mx-auto px-4 py-4">
+            <nav class="flex flex-col space-y-4">
+              <a href="/" class="text-white hover:text-primary-300 transition-colors py-2">Home</a>
+              <a href="/visualizer" class="text-white hover:text-primary-300 transition-colors py-2">Visualizer</a>
+              <a href="/upload" class="text-white hover:text-primary-300 transition-colors py-2">Upload Music</a>
+              <a href="#" class="text-white hover:text-primary-300 transition-colors py-2">About</a>
+              <a href="/upload" class="px-6 py-2 rounded-full bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 transition-all text-white font-medium text-center">
+                Get Started
+              </a>
+            </nav>
+          </div>
+        </div>
+      </header>
+      
+      <script>
+        // Mobile menu toggle
+        document.addEventListener('DOMContentLoaded', () => {
+          const mobileMenuButton = document.getElementById('mobile-menu-button');
+          const mobileMenu = document.getElementById('mobile-menu');
+          
+          if (mobileMenuButton && mobileMenu) {
+            mobileMenuButton.addEventListener('click', () => {
+              mobileMenu.classList.toggle('hidden');
+            });
           }
-          path.unshift(selector);
-          element = element.parentNode;
-      }
-      return path.join(' > ');
-  } catch (error) {
-      reportError('Failed to get element path: ' + error.message);
-      return '';
-  }
-}
-
-function findComponentElement(element) {
-  let current = element;
-  while (current && current !== document.body) {
-      if (current.hasAttribute('data-buildglarecomponent')) {
-          return current;
-      }
-      current = current.parentElement;
-  }
-  return null;
-}
-
-function getElementInfo(element) {
-  try {
-      const info = {
-          selector: getElementPath(element),
-          elementId: element.id || null,
-          elementClasses: Array.from(element.classList) || [],
-          url: window.location.href
-      };
-      
-      // 查找最近的组件元素
-      const componentElement = findComponentElement(element);
-      if (componentElement) {
-          info.componentName = componentElement.getAttribute('data-buildglarecomponent');
-      }
-      
-      return info;
-  } catch (error) {
-      reportError('Failed to get element info: ' + error.message);
-      return null;
-  }
-}
-
-function handleMouseMove(e) {
-  try {
-      if (!isSelecting) return;
-      if (currentHighlight) {
-          currentHighlight.classList.remove('element-highlight');
-      }
-      currentHighlight = e.target;
-      e.target.classList.add('element-highlight');
-      e.preventDefault();
-      e.stopPropagation();
-  } catch (error) {
-      reportError('Mouse move error: ' + error.message);
-  }
-}
-
-function handleClick(e) {
-  try {
-      if (!isSelecting) return;
-      e.preventDefault();
-      e.stopPropagation();
-      
-      const elementInfo = getElementInfo(e.target);
-      if (elementInfo) {
-          window.parent.postMessage({
-              type: 'ELEMENT_SELECTED',
-              ...elementInfo
-          }, '*');
-      }
-      
-      disableElementSelector();
-  } catch (error) {
-      reportError('Click error: ' + error.message);
-  }
-}
-
-function enableElementSelector() {
-  try {
-      isSelecting = true;
-      document.body.classList.add('element-selecting');
-      document.addEventListener('mousemove', handleMouseMove, true);
-      document.addEventListener('click', handleClick, true);
-  } catch (error) {
-      reportError('Failed to enable selector: ' + error.message);
-  }
-}
-
-function disableElementSelector() {
-  try {
-      isSelecting = false;
-      document.removeEventListener('mousemove', handleMouseMove, true);
-      document.removeEventListener('click', handleClick, true);
-      if (currentHighlight) {
-          currentHighlight.classList.remove('element-highlight');
-          currentHighlight = null;
-      }
-      document.body.classList.remove('element-selecting');
-  } catch (error) {
-      reportError('Failed to disable selector: ' + error.message);
-  }
-}
-
-// listen for messages from parent window
-window.addEventListener('message', function(event) {
-  try {
-      if (event.data.type === 'START_ELEMENT_SELECTOR') {
-          enableElementSelector();
-      } else if (event.data.type === 'STOP_ELEMENT_SELECTOR') {
-          disableElementSelector();
-      } else if (event.data.type === 'CHECK_READY') {
-          window.parent.postMessage({
-              type: 'CHECK_READY_RESPONSE',
-              isReady: document.readyState === 'complete',
-              url: window.location.href
-          }, '*');
-      }
-  } catch (error) {
-      reportError('Message handling error: ' + error.message);
-  }
-});
-
-// notify parent window that the iframe is ready
-window.addEventListener('load', notifyReady);
-window.addEventListener('hashchange', notifyReady);
-window.addEventListener('popstate', notifyReady);
-
-// check if the iframe is ready and notify parent window
-if (document.readyState === 'complete') {
-  notifyReady();
-}
-
-// 创建组件提示工具 DOM
-let tooltip = document.createElement('div');
-tooltip.className = 'component-tooltip';
-tooltip.style.display = 'none';
-document.body.appendChild(tooltip);
-
-// 用于跟踪当前高亮的元素
-let currentComponentHighlight = null;
-
-// 处理鼠标移动
-const handleComponentMouseMove = (e) => {
-  if (isSelecting) return; // 如果正在使用元素选择器，不显示组件提示
-
-  let target = e.target;
-  
-  // 移除当前高亮
-  if (currentComponentHighlight) {
-      currentComponentHighlight.classList.remove('component-highlight');
-      currentComponentHighlight = null;
-  }
-  
-  // 查找最近的带有 data-buildglarecomponent 属性的祖先元素
-  while (target && target !== document.body) {
-      if (target.hasAttribute('data-buildglarecomponent')) {
-          // 添加高亮效果
-          target.classList.add('component-highlight');
-          currentComponentHighlight = target;
+        });
+      </script>
+    </div>
           
-          // 更新提示工具位置和内容
-          tooltip.style.display = 'block';
+          <!-- Main Content -->
+          <main class="container mx-auto px-4 pt-32 pb-20">
+            <div class="max-w-5xl mx-auto">
+              <h1 class="text-4xl md:text-5xl font-bold mb-8 text-center">
+                <span class="bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">
+                  Upload Your Music
+                </span>
+              </h1>
+              
+              <p class="text-xl text-center text-gray-300 mb-10 max-w-3xl mx-auto">
+                Upload your audio files or connect to streaming services to create stunning AI-powered visualizations
+              </p>
+              
+              <!-- Tabs -->
+              <div class="mb-8 flex justify-center">
+                <div class="border-b border-gray-700 flex">
+                  <button class="px-6 py-3 font-medium border-b-2 tab-active" id="tab-upload">Upload Files</button>
+                  <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-streaming">Streaming Services</button>
+                  <button class="px-6 py-3 font-medium border-b-2 tab-inactive" id="tab-library">My Library</button>
+                </div>
+              </div>
+              
+              <!-- Upload Files Tab -->
+              <div class="tab-content active" id="content-upload">
+                <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
+                  <h2 class="text-2xl font-semibold mb-6">Upload Audio Files</h2>
+                  
+                  <!-- File Upload Area -->
+                  <div class="file-drop-area border-primary-400 text-primary-300 mb-6">
+                    <span class="fake-btn">Choose files</span>
+                    <span class="file-msg">or drag and drop audio files here</span>
+                    <input class="file-input" type="file" accept="audio/*" multiple id="audio-file-input">
+                  </div>
+                  
+                  <!-- Upload Progress (Initially Hidden) -->
+                  <div class="hidden mb-6" id="upload-progress">
+                    <div class="flex items-center justify-between mb-2">
+                      <span class="text-sm font-medium">Uploading...</span>
+                      <span class="text-sm font-medium" id="upload-percentage">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2.5">
+                      <div class="bg-gradient-to-r from-primary-500 to-accent-500 h-2.5 rounded-full" id="upload-progress-bar" style="width: 0%"></div>
+                    </div>
+                  </div>
+                  
+                  <!-- Audio Visualizer (Initially Hidden) -->
+                  <div class="hidden" id="audio-visualizer-section">
+                    <div class="border-t border-gray-700 pt-6 mb-6">
+                      <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold">
+                          <span id="audio-title">Audio Preview</span>
+                        </h3>
+                        <div class="text-sm text-gray-400" id="audio-details"></div>
+                      </div>
+                      
+                      <div class="visualizer-container" id="visualizer-container">
+                        <!-- Decorative blobs -->
+                        <div class="blob blob-animation bg-primary-600 w-32 h-32 top-10 left-10 opacity-20"></div>
+                        <div class="blob blob-animation bg-accent-600 w-40 h-40 top-20 right-0 opacity-20"></div>
+                        
+                        <!-- Visualization Type Selector -->
+                        <div class="visualization-type-selector" id="visualization-type-selector">
+                          <div class="visualization-type active" data-type="waveform">Waveform</div>
+                          <div class="visualization-type" data-type="bars">3D Bars</div>
+                          <div class="visualization-type" data-type="particles">Particles</div>
+                          <div class="visualization-type" data-type="sphere">Sphere</div>
+                        </div>
+                        
+                        <!-- Audio info -->
+                        <div class="audio-info hidden" id="audio-info">
+                          <div class="text-xl font-semibold" id="now-playing-title"></div>
+                          <div class="text-sm text-gray-300" id="now-playing-details"></div>
+                        </div>
+                        
+                        <!-- Expand/Close buttons -->
+                        <button class="expand-btn" id="expand-visualizer">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5v-4m0 4h-4m4 0l-5-5" />
+                          </svg>
+                        </button>
+                        <button class="close-btn" id="close-visualizer">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                        
+                        <!-- Audio Visualizer -->
+                        <div class="audio-visualizer-container" id="audio-visualizer">
+                          <!-- Canvas for Three.js visualization -->
+                          <canvas id="visualizer-canvas"></canvas>
+                          
+                          <!-- Audio Visualizer Placeholder (shown until audio loads) -->
+                          <div class="audio-visualizer-placeholder absolute inset-0 flex items-center justify-center" id="visualizer-placeholder">
+                            <div class="flex items-end h-20">
+                              <div class="bar h-4"></div>
+                              <div class="bar h-12"></div>
+                              <div class="bar h-8"></div>
+                              <div class="bar h-16"></div>
+                              <div class="bar h-10"></div>
+                              <div class="bar h-6"></div>
+                              <div class="bar h-12"></div>
+                              <div class="bar h-8"></div>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <!-- Audio Controls -->
+                        <div class="audio-controls">
+                          <button class="mr-4" id="play-pause-btn">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="play-icon">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 hidden" fill="none" viewBox="0 0 24 24" stroke="currentColor" id="pause-icon">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                          </button>
+                          
+                          <span class="text-xs text-gray-400 mr-2" id="current-time">0:00</span>
+                          
+                          <div class="progress-bar" id="audio-progress">
+                            <div class="progress" id="audio-progress-bar" style="width: 0%">
+                              <div class="progress-handle"></div>
+                            </div>
+                          </div>
+                          
+                          <span class="text-xs text-gray-400 ml-2" id="duration">0:00</span>
+                          
+                          <div class="ml-4 flex items-center">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.536 8.464a5 5 0 010 7.072m2.828-9.9a9 9 0 010 12.728M5.586 15.536a5 5 0 001.414 1.414m0 0l-2.828 2.828m2.828-2.828a9 9 0 010-12.728m0 0l2.828 2.828m-2.828-2.828L5.586 8.464m4.95 4.95l2.828 2.828m-2.828-2.828a5 5 0 010-7.072m0 0l2.828 2.828" />
+                            </svg>
+                            <input type="range" min="0" max="100" value="80" class="w-16 ml-1" id="volume-control">
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <!-- Upload Options -->
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
+                      <h3 class="font-medium mb-2">Audio Quality</h3>
+                      <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                          <input type="radio" name="quality" value="standard" class="mr-2 text-primary-500" checked>
+                          <span>Standard</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input type="radio" name="quality" value="high" class="mr-2 text-primary-500">
+                          <span>High</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <div class="bg-gray-700 bg-opacity-50 rounded-xl p-4">
+                      <h3 class="font-medium mb-2">Privacy</h3>
+                      <div class="flex items-center space-x-4">
+                        <label class="flex items-center">
+                          <input type="radio" name="privacy" value="public" class="mr-2 text-primary-500" checked>
+                          <span>Public</span>
+                        </label>
+                        <label class="flex items-center">
+                          <input type="radio" name="privacy" value="private" class="mr-2 text-primary-500">
+                          <span>Private</span>
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div class="flex flex-col sm:flex-row justify-end space-y-3 sm:space-y-0 sm:space-x-3">
+                    <button class="px-6 py-2 bg-gray-700 hover:bg-gray-600 rounded-lg transition-colors" id="cancel-button">
+                      Cancel
+                    </button>
+                    <button class="px-6 py-2 bg-gradient-to-r from-primary-500 to-accent-600 hover:from-primary-600 hover:to-accent-700 rounded-lg transition-all" id="upload-button">
+                      Upload & Visualize
+                    </button>
+                  </div>
+                </div>
+                
+                <!-- Upload Tips -->
+                <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+                  <h2 class="text-2xl font-semibold mb-6">Upload Tips</h2>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="flex flex-col items-center text-center">
+                      <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                        </svg>
+                      </div>
+                      <h3 class="font-medium mb-2">Supported Formats</h3>
+                      <p class="text-gray-400 text-sm">We support MP3, WAV, FLAC, and OGG audio formats for the best visualization results.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-center text-center">
+                      <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <h3 class="font-medium mb-2">Duration Limit</h3>
+                      <p class="text-gray-400 text-sm">For best performance, upload songs under 10 minutes. Longer tracks may take more time to process.</p>
+                    </div>
+                    
+                    <div class="flex flex-col items-center text-center">
+                      <div class="w-16 h-16 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center mb-4">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                        </svg>
+                      </div>
+                      <h3 class="font-medium mb-2">Better Visualization</h3>
+                      <p class="text-gray-400 text-sm">Songs with clear beats and dynamic range create the most impressive visual experiences.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Streaming Services Tab -->
+              <div class="tab-content" id="content-streaming">
+                <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 mb-10 shadow-xl">
+                  <h2 class="text-2xl font-semibold mb-6">Connect Streaming Services</h2>
+                  <p class="text-gray-400 mb-8">Connect your favorite streaming services to import your playlists and favorite tracks directly.</p>
+                  
+                  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    
+                      <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/84/Spotify_icon.svg/1982px-Spotify_icon.svg.png" alt="Spotify" class="w-16 h-16 object-contain mb-4">
+                        <span class="font-medium">Spotify</span>
+                        <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                      </button>
+                    
+                      <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5f/Apple_Music_icon.svg/2048px-Apple_Music_icon.svg.png" alt="Apple Music" class="w-16 h-16 object-contain mb-4">
+                        <span class="font-medium">Apple Music</span>
+                        <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                      </button>
+                    
+                      <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/6a/Youtube_Music_icon.svg/2048px-Youtube_Music_icon.svg.png" alt="YouTube Music" class="w-16 h-16 object-contain mb-4">
+                        <span class="font-medium">YouTube Music</span>
+                        <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                      </button>
+                    
+                      <button class="streaming-service-button flex flex-col items-center justify-center bg-gray-700 hover:bg-gray-600 rounded-xl p-6 transition-all">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Soundcloud_logo.svg/2560px-Soundcloud_logo.svg.png" alt="SoundCloud" class="w-16 h-16 object-contain mb-4">
+                        <span class="font-medium">SoundCloud</span>
+                        <span class="text-xs text-gray-400 mt-1">Connect account</span>
+                      </button>
+                    
+                  </div>
+                </div>
+                
+                <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+                  <h2 class="text-2xl font-semibold mb-6">Streaming Benefits</h2>
+                  
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <div class="flex space-x-4">
+                      <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium mb-1">Access Your Library</h3>
+                        <p class="text-gray-400 text-sm">Easily access all your playlists and favorite tracks without having to upload files.</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                      <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium mb-1">Discover New Visuals</h3>
+                        <p class="text-gray-400 text-sm">Our AI analyzes your music preferences to create personalized visualization styles.</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                      <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium mb-1">Sync Across Devices</h3>
+                        <p class="text-gray-400 text-sm">Your visualizations and preferences sync across all your devices automatically.</p>
+                      </div>
+                    </div>
+                    
+                    <div class="flex space-x-4">
+                      <div class="flex-shrink-0 w-12 h-12 bg-primary-500 bg-opacity-20 rounded-full flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 text-primary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      </div>
+                      <div>
+                        <h3 class="font-medium mb-1">Premium Features</h3>
+                        <p class="text-gray-400 text-sm">Connected accounts get access to exclusive visualization styles and effects.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- My Library Tab -->
+              <div class="tab-content" id="content-library">
+                <div class="bg-gray-800 bg-opacity-50 backdrop-blur-lg rounded-2xl p-8 shadow-xl">
+                  <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-semibold">My Music Library</h2>
+                    <div class="flex space-x-2">
+                      <div class="relative">
+                        <input type="text" placeholder="Search library..." class="py-2 px-4 pr-10 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 absolute right-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                      </div>
+                      <select class="py-2 px-4 bg-gray-700 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-primary-500">
+                        <option value="recent">Recently Added</option>
+                        <option value="name">Name</option>
+                        <option value="artist">Artist</option>
+                        <option value="duration">Duration</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left">
+                      <thead class="text-xs uppercase text-gray-400 border-b border-gray-700">
+                        <tr>
+                          <th scope="col" class="px-4 py-3">Track</th>
+                          <th scope="col" class="px-4 py-3">Duration</th>
+                          <th scope="col" class="px-4 py-3">Added</th>
+                          <th scope="col" class="px-4 py-3">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        
+                          <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                            <td class="px-4 py-3">
+                              <div class="flex items-center space-x-3">
+                                <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music1/300/300" alt="Summer Vibes">
+                                <div>
+                                  <div class="font-medium">Summer Vibes</div>
+                                  <div class="text-sm text-gray-400">Chill Wave</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">3:45</td>
+                            <td class="px-4 py-3">2025-06-15</td>
+                            <td class="px-4 py-3">
+                              <div class="flex space-x-2 track-actions">
+                                <a href="/visualizer?id=1" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                                  Visualize
+                                </a>
+                                <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        
+                          <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                            <td class="px-4 py-3">
+                              <div class="flex items-center space-x-3">
+                                <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music2/300/300" alt="Electric Dreams">
+                                <div>
+                                  <div class="font-medium">Electric Dreams</div>
+                                  <div class="text-sm text-gray-400">Synth Master</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">4:20</td>
+                            <td class="px-4 py-3">2025-06-14</td>
+                            <td class="px-4 py-3">
+                              <div class="flex space-x-2 track-actions">
+                                <a href="/visualizer?id=2" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                                  Visualize
+                                </a>
+                                <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        
+                          <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                            <td class="px-4 py-3">
+                              <div class="flex items-center space-x-3">
+                                <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music3/300/300" alt="Ocean Breeze">
+                                <div>
+                                  <div class="font-medium">Ocean Breeze</div>
+                                  <div class="text-sm text-gray-400">Nature Sounds</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">5:12</td>
+                            <td class="px-4 py-3">2025-06-12</td>
+                            <td class="px-4 py-3">
+                              <div class="flex space-x-2 track-actions">
+                                <a href="/visualizer?id=3" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                                  Visualize
+                                </a>
+                                <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        
+                          <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                            <td class="px-4 py-3">
+                              <div class="flex items-center space-x-3">
+                                <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music4/300/300" alt="Midnight Jazz">
+                                <div>
+                                  <div class="font-medium">Midnight Jazz</div>
+                                  <div class="text-sm text-gray-400">Smooth Quartet</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">6:05</td>
+                            <td class="px-4 py-3">2025-06-10</td>
+                            <td class="px-4 py-3">
+                              <div class="flex space-x-2 track-actions">
+                                <a href="/visualizer?id=4" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                                  Visualize
+                                </a>
+                                <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        
+                          <tr class="border-b border-gray-700 hover:bg-gray-700 transition-colors upload-track-row">
+                            <td class="px-4 py-3">
+                              <div class="flex items-center space-x-3">
+                                <img class="w-10 h-10 rounded" src="https://picsum.photos/seed/music5/300/300" alt="Urban Rhythm">
+                                <div>
+                                  <div class="font-medium">Urban Rhythm</div>
+                                  <div class="text-sm text-gray-400">City Beats</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td class="px-4 py-3">3:28</td>
+                            <td class="px-4 py-3">2025-06-08</td>
+                            <td class="px-4 py-3">
+                              <div class="flex space-x-2 track-actions">
+                                <a href="/visualizer?id=5" class="px-3 py-1 bg-primary-600 hover:bg-primary-700 rounded text-sm">
+                                  Visualize
+                                </a>
+                                <button class="px-3 py-1 bg-gray-600 hover:bg-gray-500 rounded text-sm">
+                                  Delete
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        
+                      </tbody>
+                    </table>
+                  </div>
+                  
+                  <div class="mt-6 flex justify-between items-center">
+                    <div class="text-sm text-gray-400">
+                      Showing 5 of 24 tracks
+                    </div>
+                    <div class="flex space-x-2">
+                      <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+                        </svg>
+                      </button>
+                      <button class="w-8 h-8 rounded-lg bg-primary-600 flex items-center justify-center">1</button>
+                      <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">2</button>
+                      <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center">3</button>
+                      <button class="w-8 h-8 rounded-lg bg-gray-700 flex items-center justify-center text-gray-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
           
-          // 计算位置，确保提示框不会超出视口
-          const rect = target.getBoundingClientRect();
-          const tooltipX = Math.min(
-              e.clientX + 10, 
-              window.innerWidth - tooltip.offsetWidth - 10
-          );
-          const tooltipY = Math.min(
-              e.clientY + 10, 
-              window.innerHeight - tooltip.offsetHeight - 10
-          );
+          <!-- Audio Element (Hidden) -->
+          <audio id="audio-player"></audio>
           
-          tooltip.style.left = tooltipX + 'px';
-          tooltip.style.top = tooltipY + 'px';
-          tooltip.textContent = 'This is ' + target.getAttribute('data-buildglarecomponent') + ' component';
-          return;
-      }
-      target = target.parentElement;
-  }
-  
-  // 如果没有找到组件，隐藏提示工具
-  tooltip.style.display = 'none';
-};
+          <div data-buildglarecomponent="footer">
+      <!-- Footer -->
+      <footer class="bg-gray-900 py-12">
+        <div class="container mx-auto px-4">
+          <div class="flex flex-col md:flex-row justify-between items-center">
+            <div class="flex items-center space-x-2 mb-6 md:mb-0">
+              <div class="w-8 h-8 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+                <div class="w-6 h-6 rounded-full bg-gray-900 flex items-center justify-center">
+                  <div class="w-4 h-4 rounded-full bg-gradient-to-r from-primary-500 to-accent-500 flex items-center justify-center">
+                    <div class="w-1.5 h-3 bg-white rounded-full"></div>
+                  </div>
+                </div>
+              </div>
+              <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary-300 to-accent-500">SoundWave AI</span>
+            </div>
+            
+            <nav class="flex flex-wrap justify-center space-x-8 mb-6 md:mb-0">
+              <a href="/" class="text-gray-400 hover:text-primary-300 transition-colors">Home</a>
+              <a href="/visualizer" class="text-gray-400 hover:text-primary-300 transition-colors">Visualizer</a>
+              <a href="/upload" class="text-gray-400 hover:text-primary-300 transition-colors">Upload</a>
+              <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">About</a>
+            </nav>
+            
+            <div class="flex space-x-4">
+              <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clip-rule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd" />
+                </svg>
+              </a>
+              <a href="#" class="text-gray-400 hover:text-primary-300 transition-colors">
+                <svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+                </svg>
+              </a>
+            </div>
+          </div>
+          
+          <div class="border-t border-gray-800 mt-8 pt-8 text-center">
+            <p class="text-gray-500 text-sm">
+              &copy; 2025 SoundWave AI. All rights reserved.
+            </p>
+          </div>
+        </div>
+      </footer>
+    </div>
+          
+          <script>
+            // Global variables
+            let audioContext;
+            let audioSource;
+            let analyser;
+            let audioElement;
+            let frequencyData;
+            let scene, camera, renderer, visualizationGroup;
+            let isPlaying = false;
+            let currentVisualizationType = 'waveform';
+            let currentFile = null;
+            let animationFrameId = null;
+            
+            // Tab switching
+            document.addEventListener('DOMContentLoaded', function() {
+              const tabs = document.querySelectorAll('[id^="tab-"]');
+              const contents = document.querySelectorAll('[id^="content-"]');
+              
+              tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                  // Remove active class from all tabs and contents
+                  tabs.forEach(t => {
+                    t.classList.remove('tab-active');
+                    t.classList.add('tab-inactive');
+                  });
+                  contents.forEach(c => c.classList.remove('active'));
+                  
+                  // Add active class to clicked tab and corresponding content
+                  tab.classList.add('tab-active');
+                  tab.classList.remove('tab-inactive');
+                  
+                  const contentId = 'content-' + tab.id.split('-')[1];
+                  document.getElementById(contentId).classList.add('active');
+                });
+              });
+              
+              // Initialize audio player
+              initAudioPlayer();
+              
+              // Initialize file upload interaction
+              initFileUpload();
+              
+              // Initialize visualization type selector
+              initVisualizationTypeSelector();
+            });
+            
+            // Initialize audio player and Web Audio API
+            function initAudioPlayer() {
+              audioElement = document.getElementById('audio-player');
+              
+              // Set up audio controls
+              const playPauseBtn = document.getElementById('play-pause-btn');
+              const playIcon = document.getElementById('play-icon');
+              const pauseIcon = document.getElementById('pause-icon');
+              const progressBar = document.getElementById('audio-progress');
+              const progressBarFill = document.getElementById('audio-progress-bar');
+              const currentTimeDisplay = document.getElementById('current-time');
+              const durationDisplay = document.getElementById('duration');
+              const volumeControl = document.getElementById('volume-control');
+              
+              // Play/Pause button
+              playPauseBtn.addEventListener('click', togglePlayPause);
+              
+              // Progress bar interaction
+              progressBar.addEventListener('click', (e) => {
+                if (!audioElement.duration) return;
+                
+                const rect = progressBar.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const percent = x / rect.width;
+                
+                audioElement.currentTime = percent * audioElement.duration;
+              });
+              
+              // Volume control
+              volumeControl.addEventListener('input', () => {
+                audioElement.volume = volumeControl.value / 100;
+              });
+              
+              // Update progress as audio plays
+              audioElement.addEventListener('timeupdate', () => {
+                if (!audioElement.duration) return;
+                
+                const percent = (audioElement.currentTime / audioElement.duration) * 100;
+                progressBarFill.style.width = `${percent}%`;
+                
+                // Update time display
+                currentTimeDisplay.textContent = formatTime(audioElement.currentTime);
+              });
+              
+              // When audio has loaded metadata
+              audioElement.addEventListener('loadedmetadata', () => {
+                durationDisplay.textContent = formatTime(audioElement.duration);
+              });
+              
+              // When audio ends
+              audioElement.addEventListener('ended', () => {
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                progressBarFill.style.width = '0%';
+                isPlaying = false;
+              });
+              
+              // Expand/collapse visualizer
+              const expandBtn = document.getElementById('expand-visualizer');
+              const closeBtn = document.getElementById('close-visualizer');
+              const visualizerContainer = document.getElementById('visualizer-container');
+              const audioInfo = document.getElementById('audio-info');
+              
+              expandBtn.addEventListener('click', () => {
+                visualizerContainer.classList.add('expanded');
+                audioInfo.classList.remove('hidden');
+                
+                // Resize renderer when expanding
+                if (renderer) {
+                  const width = visualizerContainer.clientWidth;
+                  const height = visualizerContainer.clientHeight;
+                  camera.aspect = width / height;
+                  camera.updateProjectionMatrix();
+                  renderer.setSize(width, height);
+                }
+              });
+              
+              closeBtn.addEventListener('click', () => {
+                visualizerContainer.classList.remove('expanded');
+                audioInfo.classList.add('hidden');
+                
+                // Resize renderer when collapsing
+                if (renderer) {
+                  const width = visualizerContainer.clientWidth;
+                  const height = visualizerContainer.clientHeight;
+                  camera.aspect = width / height;
+                  camera.updateProjectionMatrix();
+                  renderer.setSize(width, height);
+                }
+              });
+              
+              // Initialize Three.js for visualization
+              initThreeJsScene();
+            }
+            
+            // File upload interaction
+            function initFileUpload() {
+              const fileInput = document.getElementById('audio-file-input');
+              const fileDropArea = document.querySelector('.file-drop-area');
+              const fileMsg = document.querySelector('.file-msg');
+              const uploadButton = document.getElementById('upload-button');
+              const cancelButton = document.getElementById('cancel-button');
+              const uploadProgress = document.getElementById('upload-progress');
+              const uploadProgressBar = document.getElementById('upload-progress-bar');
+              const uploadPercentage = document.getElementById('upload-percentage');
+              const audioVisualizerSection = document.getElementById('audio-visualizer-section');
+              const audioTitle = document.getElementById('audio-title');
+              const audioDetails = document.getElementById('audio-details');
+              const nowPlayingTitle = document.getElementById('now-playing-title');
+              const nowPlayingDetails = document.getElementById('now-playing-details');
+              
+              fileInput.addEventListener('change', function() {
+                if (this.files && this.files.length) {
+                  const file = this.files[0];
+                  currentFile = file;
+                  
+                  fileMsg.textContent = file.name;
+                  fileMsg.classList.add('font-medium');
+                  fileDropArea.classList.add('border-primary-500');
+                  
+                  // Load audio file
+                  loadAudioFile(file);
+                }
+              });
+              
+              ['dragover', 'dragenter'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileDropArea.classList.add('is-active');
+                }, false);
+              });
+              
+              ['dragleave', 'dragend', 'drop'].forEach(eventName => {
+                fileDropArea.addEventListener(eventName, e => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  fileDropArea.classList.remove('is-active');
+                }, false);
+              });
+              
+              fileDropArea.addEventListener('drop', e => {
+                const file = e.dataTransfer.files[0];
+                currentFile = file;
+                
+                fileMsg.textContent = file.name;
+                fileMsg.classList.add('font-medium');
+                fileDropArea.classList.add('border-primary-500');
+                
+                // Load audio file
+                loadAudioFile(file);
+              }, false);
+              
+              // Upload & Visualize button
+              uploadButton.addEventListener('click', () => {
+                if (!currentFile) {
+                  alert('Please select a file to upload');
+                  return;
+                }
+                
+                // First, make sure we save the audio data before redirecting
+                saveAudioToSessionStorage();
+                
+                uploadProgress.classList.remove('hidden');
+                
+                // Simulate upload process with progress
+                let progress = 0;
+                const interval = setInterval(() => {
+                  progress += Math.floor(Math.random() * 10) + 1;
+                  if (progress > 100) progress = 100;
+                  
+                  uploadProgressBar.style.width = `${progress}%`;
+                  uploadPercentage.textContent = `${progress}%`;
+                  
+                  if (progress === 100) {
+                    clearInterval(interval);
+                    
+                    // Add success message
+                    const successMsg = document.createElement('div');
+                    successMsg.className = 'flex items-center space-x-2 text-green-400 mt-2';
+                    successMsg.innerHTML = `
+                      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                      </svg>
+                      <span>Upload complete!</span>
+                    `;
+                    uploadProgress.after(successMsg);
+                    
+                    // Redirect after a short delay
+                    setTimeout(() => {
+                      window.location.href = '/visualizer?id=new';
+                    }, 1500);
+                  }
+                }, 200);
+              });
+              
+              // Cancel button
+              cancelButton.addEventListener('click', () => {
+                resetFileUpload();
+              });
+              
+              // Function to load audio file
+              function loadAudioFile(file) {
+                const objectURL = URL.createObjectURL(file);
+                audioElement.src = objectURL;
+                
+                // Show audio visualizer section
+                audioVisualizerSection.classList.remove('hidden');
+                
+                // Set audio details
+                const fileSizeMB = (file.size / (1024 * 1024)).toFixed(2);
+                audioTitle.textContent = file.name;
+                audioDetails.textContent = file.type + " · " + fileSizeMB + " MB";
+                nowPlayingTitle.textContent = file.name;
+                nowPlayingDetails.textContent = file.type + " · " + fileSizeMB + " MB";
+                
+                // Play audio
+                audioElement.addEventListener('canplay', () => {
+                  togglePlayPause();
+                  
+                  // Set up Web Audio API for visualization
+                  setupAudioAnalyser();
+                }, { once: true });
+              }
+              
+              // Function to reset file upload
+              function resetFileUpload() {
+                fileInput.value = '';
+                fileMsg.textContent = 'or drag and drop audio files here';
+                fileMsg.classList.remove('font-medium');
+                fileDropArea.classList.remove('border-primary-500');
+                audioVisualizerSection.classList.add('hidden');
+                
+                if (audioElement) {
+                  audioElement.pause();
+                  audioElement.src = '';
+                }
+                
+                if (audioSource) {
+                  audioSource.disconnect();
+                  audioSource = null;
+                }
+                
+                if (animationFrameId) {
+                  cancelAnimationFrame(animationFrameId);
+                  animationFrameId = null;
+                }
+                
+                currentFile = null;
+                isPlaying = false;
+              }
+              
+              // Function to save audio data to session storage for visualizer page
+              function saveAudioToSessionStorage() {
+                if (!currentFile) return;
+                
+                // We'll save the file name and type for display purposes
+                const audioInfo = {
+                  fileName: currentFile.name,
+                  fileType: currentFile.type,
+                  fileSize: currentFile.size
+                };
+                
+                // Save audio info to session storage
+                sessionStorage.setItem('currentAudioInfo', JSON.stringify(audioInfo));
+                
+                // We need to convert the audio file to base64 to store it
+                const reader = new FileReader();
+                reader.readAsDataURL(currentFile);
+                reader.onload = function() {
+                  sessionStorage.setItem('currentAudioData', reader.result);
+                };
+              }
+            }
+            
+            // Initialize visualization type selector
+            function initVisualizationTypeSelector() {
+              const visualizationTypes = document.querySelectorAll('.visualization-type');
+              
+              visualizationTypes.forEach(type => {
+                type.addEventListener('click', () => {
+                  // Remove active class from all types
+                  visualizationTypes.forEach(t => t.classList.remove('active'));
+                  
+                  // Add active class to clicked type
+                  type.classList.add('active');
+                  
+                  // Change visualization type
+                  const visualizationType = type.dataset.type;
+                  changeVisualizationType(visualizationType);
+                });
+              });
+            }
+            
+            // Toggle play/pause
+            function togglePlayPause() {
+              const playIcon = document.getElementById('play-icon');
+              const pauseIcon = document.getElementById('pause-icon');
+              
+              if (audioElement.paused) {
+                // Start audio context on user interaction (required by browsers)
+                if (audioContext && audioContext.state === 'suspended') {
+                  audioContext.resume();
+                }
+                
+                audioElement.play().then(() => {
+                  playIcon.classList.add('hidden');
+                  pauseIcon.classList.remove('hidden');
+                  isPlaying = true;
+                  
+                  // Hide placeholder when playing
+                  document.getElementById('visualizer-placeholder').classList.add('hidden');
+                }).catch(error => {
+                  console.error('Error playing audio:', error);
+                });
+              } else {
+                audioElement.pause();
+                playIcon.classList.remove('hidden');
+                pauseIcon.classList.add('hidden');
+                isPlaying = false;
+              }
+            }
+            
+            // Format time in seconds to MM:SS
+            function formatTime(seconds) {
+              const minutes = Math.floor(seconds / 60);
+              const secs = Math.floor(seconds % 60);
+              return `${minutes}:${secs.toString().padStart(2, '0')}`;
+            }
+            
+            // Set up Web Audio API for visualization
+            function setupAudioAnalyser() {
+              try {
+                // Create audio context if it doesn't exist
+                if (!audioContext) {
+                  audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                
+                // Disconnect any existing sources
+                if (audioSource) {
+                  audioSource.disconnect();
+                }
+                
+                // Create new audio source from audio element
+                audioSource = audioContext.createMediaElementSource(audioElement);
+                
+                // Create analyser
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 512; // More detailed frequency data
+                analyser.smoothingTimeConstant = 0.8; // Smoother transitions
+                
+                // Connect source to analyser and then to destination (speakers)
+                audioSource.connect(analyser);
+                analyser.connect(audioContext.destination);
+                
+                // Set up frequency data array
+                frequencyData = new Uint8Array(analyser.frequencyBinCount);
+                
+                // Start animation loop if not already running
+                if (!animationFrameId) {
+                  updateVisualization();
+                }
+              } catch (error) {
+                console.error('Error setting up audio analyser:', error);
+                // Fallback to mock data if Web Audio API fails
+                if (!animationFrameId) {
+                  updateVisualization();
+                }
+              }
+            }
+            
+            // Initialize Three.js scene
+            function initThreeJsScene() {
+              try {
+                const container = document.getElementById('visualizer-container');
+                const canvas = document.getElementById('visualizer-canvas');
+                
+                // Create scene
+                scene = new THREE.Scene();
+                
+                // Create camera
+                camera = new THREE.PerspectiveCamera(75, container.clientWidth / container.clientHeight, 0.1, 1000);
+                camera.position.z = 5;
+                
+                // Create renderer
+                renderer = new THREE.WebGLRenderer({
+                  canvas: canvas,
+                  antialias: true,
+                  alpha: true
+                });
+                renderer.setSize(container.clientWidth, container.clientHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                
+                // Create lights
+                const ambientLight = new THREE.AmbientLight(0x404040);
+                scene.add(ambientLight);
+                
+                const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+                directionalLight.position.set(0, 1, 1);
+                scene.add(directionalLight);
+                
+                // Create a group for all visualization elements
+                visualizationGroup = new THREE.Group();
+                scene.add(visualizationGroup);
+                
+                // Create waveform visualization (default)
+                createWaveformVisualization(visualizationGroup);
+                
+                // Handle window resize
+                window.addEventListener('resize', () => {
+                  const width = container.clientWidth;
+                  const height = container.clientHeight;
+                  
+                  camera.aspect = width / height;
+                  camera.updateProjectionMatrix();
+                  renderer.setSize(width, height);
+                });
+              } catch (error) {
+                console.error('Error initializing Three.js scene:', error);
+                // Show error message in visualizer container
+                const visualizerContainer = document.getElementById('visualizer-container');
+                const errorMessage = document.createElement('div');
+                errorMessage.className = 'absolute inset-0 flex items-center justify-center text-center p-4';
+                errorMessage.innerHTML = `
+                  <div>
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-12 w-12 text-red-500 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                    </svg>
+                    <p>Unable to initialize 3D visualizer. Your browser may not support WebGL.</p>
+                  </div>
+                `;
+                visualizerContainer.appendChild(errorMessage);
+              }
+            }
+            
+            // Change visualization type
+            function changeVisualizationType(type) {
+              currentVisualizationType = type;
+              
+              switch (type) {
+                case 'waveform':
+                  createWaveformVisualization(visualizationGroup);
+                  break;
+                case 'bars':
+                  create3DBarsVisualization(visualizationGroup);
+                  break;
+                case 'particles':
+                  createParticleVisualization(visualizationGroup);
+                  break;
+                case 'sphere':
+                  createSphereVisualization(visualizationGroup);
+                  break;
+                default:
+                  createWaveformVisualization(visualizationGroup);
+              }
+            }
+            
+            // Create waveform visualization
+            function createWaveformVisualization(group) {
+              // Clear existing visualization
+              clearVisualization(group);
+              
+              // Create bars
+              const barCount = 60;
+              const barWidth = 0.05;
+              const barSpacing = 0.02;
+              const totalWidth = barCount * (barWidth + barSpacing);
+              
+              for (let i = 0; i < barCount; i++) {
+                const height = 0.1; // Start with minimal height
+                
+                const geometry = new THREE.BoxGeometry(barWidth, height, barWidth);
+                const material = new THREE.MeshPhongMaterial({
+                  color: new THREE.Color(0x0ea5e9),
+                  emissive: new THREE.Color(0x0ea5e9),
+                  emissiveIntensity: 0.5,
+                  transparent: true,
+                  opacity: 0.8
+                });
+                
+                const bar = new THREE.Mesh(geometry, material);
+                bar.position.x = i * (barWidth + barSpacing) - totalWidth / 2;
+                bar.position.y = height / 2;
+                
+                // Store original height for animation
+                bar.userData.originalHeight = height;
+                
+                group.add(bar);
+              }
+            }
+            
+            // Create 3D bars visualization
+            function create3DBarsVisualization(group) {
+              clearVisualization(group);
+              
+              // Create a grid of bars
+              const gridSize = 10;
+              const spacing = 0.3;
+              const size = 0.2;
+              
+              for (let x = 0; x < gridSize; x++) {
+                for (let z = 0; z < gridSize; z++) {
+                  const height = 0.2;
+                  
+                  const geometry = new THREE.BoxGeometry(size, height, size);
+                  const material = new THREE.MeshPhongMaterial({
+                    color: new THREE.Color(0x0ea5e9),
+                    emissive: new THREE.Color(0x8b5cf6),
+                    emissiveIntensity: 0.3,
+                    transparent: true,
+                    opacity: 0.8
+                  });
+                  
+                  const bar = new THREE.Mesh(geometry, material);
+                  bar.position.x = (x - gridSize / 2) * spacing;
+                  bar.position.y = height / 2;
+                  bar.position.z = (z - gridSize / 2) * spacing;
+                  
+                  // Store original height for animation
+                  bar.userData.originalHeight = height;
+                  
+                  group.add(bar);
+                }
+              }
+            }
+            
+            // Create particle visualization
+            function createParticleVisualization(group) {
+              clearVisualization(group);
+              
+              // Create particles
+              const particleCount = 2000;
+              const particles = new THREE.BufferGeometry();
+              const positions = new Float32Array(particleCount * 3);
+              const sizes = new Float32Array(particleCount);
+              
+              for (let i = 0; i < particleCount; i++) {
+                // Random position in a sphere
+                const radius = 3 * Math.random();
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
+                positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
+                positions[i * 3 + 2] = radius * Math.cos(phi);
+                
+                sizes[i] = Math.random() * 0.1 + 0.05;
+              }
+              
+              particles.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+              particles.setAttribute('size', new THREE.BufferAttribute(sizes, 1));
+              
+              // Create particle shader material
+              const particleMaterial = new THREE.PointsMaterial({
+                color: new THREE.Color(0x0ea5e9),
+                size: 0.1,
+                transparent: true,
+                opacity: 0.8,
+                blending: THREE.AdditiveBlending,
+                sizeAttenuation: true
+              });
+              
+              const particleSystem = new THREE.Points(particles, particleMaterial);
+              particleSystem.userData.positions = positions;
+              particleSystem.userData.sizes = sizes;
+              
+              group.add(particleSystem);
+            }
+            
+            // Create sphere visualization
+            function createSphereVisualization(group) {
+              clearVisualization(group);
+              
+              // Create central sphere
+              const sphereGeometry = new THREE.SphereGeometry(1, 32, 32);
+              const sphereMaterial = new THREE.MeshPhongMaterial({
+                color: new THREE.Color(0x0ea5e9),
+                emissive: new THREE.Color(0x8b5cf6),
+                emissiveIntensity: 0.5,
+                transparent: true,
+                opacity: 0.7
+              });
+              
+              const sphere = new THREE.Mesh(sphereGeometry, sphereMaterial);
+              group.add(sphere);
+              
+              // Create orbiting particles
+              const particleCount = 200;
+              
+              for (let i = 0; i < particleCount; i++) {
+                const radius = Math.random() * 0.1 + 0.05;
+                const geometry = new THREE.SphereGeometry(radius, 16, 16);
+                const material = new THREE.MeshPhongMaterial({
+                  color: i % 2 === 0 ? new THREE.Color(0x0ea5e9) : new THREE.Color(0x8b5cf6),
+                  emissive: i % 2 === 0 ? new THREE.Color(0x0ea5e9) : new THREE.Color(0x8b5cf6),
+                  emissiveIntensity: 0.5,
+                  transparent: true,
+                  opacity: 0.7
+                });
+                
+                const particle = new THREE.Mesh(geometry, material);
+                
+                // Random position on a sphere
+                const orbitRadius = 1.5 + Math.random() * 1.5;
+                const theta = Math.random() * Math.PI * 2;
+                const phi = Math.random() * Math.PI;
+                
+                particle.position.x = orbitRadius * Math.sin(phi) * Math.cos(theta);
+                particle.position.y = orbitRadius * Math.sin(phi) * Math.sin(theta);
+                particle.position.z = orbitRadius * Math.cos(phi);
+                
+                // Store original position and orbit info for animation
+                particle.userData.orbitRadius = orbitRadius;
+                particle.userData.orbitSpeed = Math.random() * 0.02 + 0.01;
+                particle.userData.orbitOffset = Math.random() * Math.PI * 2;
+                
+                group.add(particle);
+              }
+            }
+            
+            // Clear visualization
+            function clearVisualization(group) {
+              while (group.children.length > 0) {
+                const object = group.children[0];
+                
+                if (object.geometry) {
+                  object.geometry.dispose();
+                }
+                
+                if (object.material) {
+                  if (Array.isArray(object.material)) {
+                    object.material.forEach(material => material.dispose());
+                  } else {
+                    object.material.dispose();
+                  }
+                }
+                
+                group.remove(object);
+              }
+            }
+            
+            // Update visualization based on audio data
+            function updateVisualization() {
+              // Request next frame
+              animationFrameId = requestAnimationFrame(updateVisualization);
+              
+              if (!renderer || !scene || !camera) return;
+              
+              // Get frequency data if available
+              let audioData;
+              if (analyser && isPlaying) {
+                analyser.getByteFrequencyData(frequencyData);
+                audioData = frequencyData;
+              } else {
+                audioData = generateMockAudioData();
+              }
+              
+              // Update visualization based on current type
+              switch (currentVisualizationType) {
+                case 'waveform':
+                  updateWaveformVisualization(visualizationGroup, audioData);
+                  break;
+                case 'bars':
+                  update3DBarsVisualization(visualizationGroup, audioData);
+                  break;
+                case 'particles':
+                  updateParticleVisualization(visualizationGroup, audioData);
+                  break;
+                case 'sphere':
+                  updateSphereVisualization(visualizationGroup, audioData);
+                  break;
+                default:
+                  updateWaveformVisualization(visualizationGroup, audioData);
+              }
+              
+              // Render scene
+              renderer.render(scene, camera);
+            }
+            
+            // Generate mock audio data when no audio is playing
+            function generateMockAudioData() {
+              const dataPoints = 128;
+              const data = [];
+              const time = Date.now() * 0.001;
+              
+              // Generate mock frequency data with some animation
+              for (let i = 0; i < dataPoints; i++) {
+                const value = Math.sin(i * 0.1 + time) * 50 + Math.random() * 30;
+                data.push(Math.max(0, Math.min(255, value)));
+              }
+              
+              return data;
+            }
+            
+            // Update waveform visualization with frequency data
+            function updateWaveformVisualization(group, data) {
+              if (!group || group.children.length === 0) return;
+              
+              // Update each bar
+              group.children.forEach((bar, i) => {
+                // Use frequency data to determine height
+                const dataIndex = Math.floor(i / group.children.length * data.length);
+                const frequencyValue = data[dataIndex] / 255; // Normalize to 0-1
+                
+                const targetHeight = 0.1 + frequencyValue * 4; // Scale for better visibility
+                
+                // Smooth transition to target height
+                bar.scale.y = 0.3 * bar.scale.y + 0.7 * targetHeight;
+                bar.position.y = bar.scale.y * bar.userData.originalHeight / 2;
+                
+                // Update color based on height
+                const hue = 0.6 - bar.scale.y * 0.1; // Blue to purple
+                bar.material.color.setHSL(hue, 0.8, 0.5);
+                bar.material.emissive.setHSL(hue, 0.8, 0.5);
+              });
+              
+              // Rotate visualization group slightly for more dynamic effect
+              group.rotation.y += 0.003;
+            }
+            
+            // Update 3D bars visualization
+            function update3DBarsVisualization(group, data) {
+              if (!group || group.children.length === 0) return;
+              
+              const gridSize = Math.sqrt(group.children.length);
+              
+              group.children.forEach((bar, i) => {
+                const x = Math.floor(i / gridSize);
+                const z = i % gridSize;
+                
+                // Map position to frequency data
+                const dataIndex = Math.floor((x * gridSize + z) / group.children.length * data.length);
+                const frequencyValue = data[dataIndex] / 255;
+                
+                const targetHeight = 0.2 + frequencyValue * 3;
+                
+                // Smooth transition to target height
+                bar.scale.y = 0.3 * bar.scale.y + 0.7 * targetHeight;
+                bar.position.y = bar.scale.y * bar.userData.originalHeight / 2;
+                
+                // Update color based on height
+                const hue = 0.6 - frequencyValue * 0.5; // Blue to purple
+                bar.material.color.setHSL(hue, 0.8, 0.5);
+                bar.material.emissive.setHSL(hue, 0.8, 0.5);
+              });
+              
+              // Rotate visualization group
+              group.rotation.y += 0.005;
+            }
+            
+            // Update particle visualization
+            function updateParticleVisualization(group, data) {
+              if (!group || group.children.length === 0) return;
+              
+              const particleSystem = group.children[0];
+              if (!particleSystem || !particleSystem.userData.positions) return;
+              
+              const positions = particleSystem.userData.positions;
+              const sizes = particleSystem.userData.sizes;
+              const time = Date.now() * 0.001;
+              
+              // Calculate average frequency for overall intensity
+              let avgFrequency = 0;
+              for (let i = 0; i < data.length; i++) {
+                avgFrequency += data[i];
+              }
+              avgFrequency /= data.length;
+              const normalizedAvgFreq = avgFrequency / 255;
+              
+              // Update particle positions and sizes based on audio
+              for (let i = 0; i < positions.length / 3; i++) {
+                const dataIndex = i % data.length;
+                const frequencyValue = data[dataIndex] / 255;
+                
+                // Get original position (normalized direction)
+                const x = positions[i * 3];
+                const y = positions[i * 3 + 1];
+                const z = positions[i * 3 + 2];
+                
+                const distance = Math.sqrt(x * x + y * y + z * z);
+                const normX = x / distance;
+                const normY = y / distance;
+                const normZ = z / distance;
+                
+                // Pulsate based on frequency and time
+                const pulseRadius = 2 + Math.sin(time + i * 0.01) * 0.3 + frequencyValue * 2;
+                
+                positions[i * 3] = normX * pulseRadius;
+                positions[i * 3 + 1] = normY * pulseRadius;
+                positions[i * 3 + 2] = normZ * pulseRadius;
+                
+                // Update sizes based on frequency
+                sizes[i] = 0.05 + frequencyValue * 0.15;
+              }
+              
+              // Update attributes
+              particleSystem.geometry.attributes.position.needsUpdate = true;
+              particleSystem.geometry.attributes.size.needsUpdate = true;
+              
+              // Update color based on overall energy
+              const hue = 0.6 - normalizedAvgFreq * 0.5; // Blue to purple
+              particleSystem.material.color.setHSL(hue, 0.8, 0.5);
+              
+              // Rotate the particle system
+              particleSystem.rotation.y += 0.002;
+              particleSystem.rotation.x += 0.001;
+            }
+            
+            // Update sphere visualization
+            function updateSphereVisualization(group, data) {
+              if (!group || group.children.length === 0) return;
+              
+              // Calculate average frequency for overall intensity
+              let avgFrequency = 0;
+              for (let i = 0; i < data.length; i++) {
+                avgFrequency += data[i];
+              }
+              avgFrequency /= data.length;
+              const normalizedAvgFreq = avgFrequency / 255;
+              
+              // Update central sphere
+              const sphere = group.children[0];
+              const pulseScale = 1 + normalizedAvgFreq * 0.5;
+              sphere.scale.set(pulseScale, pulseScale, pulseScale);
+              
+              // Update color based on intensity
+              const hue = 0.6 - normalizedAvgFreq * 0.5; // Blue to purple
+              sphere.material.color.setHSL(hue, 0.8, 0.5);
+              sphere.material.emissive.setHSL(hue, 0.8, 0.5);
+              
+              // Update orbiting particles
+              const time = Date.now() * 0.001;
+              
+              for (let i = 1; i < group.children.length; i++) {
+                const particle = group.children[i];
+                const dataIndex = i % data.length;
+                const frequencyValue = data[dataIndex] / 255;
+                
+                // Get orbit parameters
+                const orbitRadius = particle.userData.orbitRadius + frequencyValue * 0.5;
+                const orbitSpeed = particle.userData.orbitSpeed;
+                const orbitOffset = particle.userData.orbitOffset;
+                
+                // Calculate new position
+                const theta = time * orbitSpeed + orbitOffset;
+                const phi = Math.PI / 2 + Math.sin(time * orbitSpeed * 0.5) * Math.PI / 4;
+                
+                particle.position.x = orbitRadius * Math.sin(phi) * Math.cos(theta);
+                particle.position.y = orbitRadius * Math.sin(phi) * Math.sin(theta);
+                particle.position.z = orbitRadius * Math.cos(phi);
+                
+                // Scale particle based on frequency
+                const scale = 0.5 + frequencyValue;
+                particle.scale.set(scale, scale, scale);
+              }
+            }
+          </script>
+        <script>
+    // 添加样式
+    const bgStyle = document.createElement('style');
+    bgStyle.textContent = `
+        .element-highlight {
+            outline: 2px solid #3b82f6 !important;
+            outline-offset: -2px !important;
+        }
+        .element-selecting * {
+            cursor: crosshair !important;
+        }
+        .component-tooltip {
+            position: fixed;
+            background: rgba(17, 24, 39, 0.9);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            z-index: 2147483646;
+            pointer-events: none;
+            transition: all 0.05s linear;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(8px);
+        }
+        .component-highlight {
+            outline: 2px dashed #3b82f6 !important;
+            outline-offset: -2px !important;
+            background-color: rgba(59, 130, 246, 0.1) !important;
+            z-index: 2147483645 !important;
+            position: relative !important;
+        }
+    `;
+    document.head.appendChild(bgStyle);
 
-// 监听鼠标移动事件
-document.addEventListener('mousemove', handleComponentMouseMove);
+    // A function to handle sending messages.
+    function sendMessage(e) {
+        // Prevent any default browser behaviour.
+        e.preventDefault();
+    
+        // Send a message to the receiver window.
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'URL_CHANGE',
+                url: window.location.href
+            }, '*');
+        }
+    }
+    
+    // Add an event listener that will execute the sendMessage() function
+    window.addEventListener('load', sendMessage);
+    window.addEventListener("hashchange", sendMessage);
+    window.addEventListener("popstate", sendMessage);
 
-// 处理滚动事件
-const handleScroll = () => {
-  tooltip.style.display = 'none';
-  if (currentComponentHighlight) {
-      currentComponentHighlight.classList.remove('component-highlight');
-      currentComponentHighlight = null;
-  }
-};
+    // elementor selector script
+    let currentHighlight = null;
+    let isSelecting = false;
+    
+    // send message to parent window to notify that the iframe is ready
+    function notifyReady() {
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'IFRAME_READY',
+                url: window.location.href
+            }, '*');
+        }
+    }
+    
+    // send message to parent window to report an error
+    function reportError(message) {
+        if (window.parent !== window && window.top !== window) {
+            window.parent.postMessage({
+                type: 'SELECTOR_ERROR',
+                message: message
+            }, '*');
+        }
+    }
+    
+    function getElementPath(element) {
+        try {
+            const path = [];
+            while (element && element.nodeType === Node.ELEMENT_NODE) {
+                let selector = element.nodeName.toLowerCase();
+                if (element.id) {
+                    selector += '#' + element.id;
+                } else {
+                    let nth = 1;
+                    let sib = element;
+                    while (sib.previousElementSibling) {
+                        if (sib.previousElementSibling.nodeName === element.nodeName) nth++;
+                        sib = sib.previousElementSibling;
+                    }
+                    if (nth !== 1) selector += ':nth-of-type(' + nth + ')';
+                }
+                path.unshift(selector);
+                element = element.parentNode;
+            }
+            return path.join(' > ');
+        } catch (error) {
+            reportError('Failed to get element path: ' + error.message);
+            return '';
+        }
+    }
+    
+    function findComponentElement(element) {
+        let current = element;
+        while (current && current !== document.body) {
+            if (current.hasAttribute('data-buildglarecomponent')) {
+                return current;
+            }
+            current = current.parentElement;
+        }
+        return null;
+    }
+    
+    function getElementInfo(element) {
+        try {
+            const info = {
+                selector: getElementPath(element),
+                elementId: element.id || null,
+                elementClasses: Array.from(element.classList) || [],
+                url: window.location.href
+            };
+            
+            // 查找最近的组件元素
+            const componentElement = findComponentElement(element);
+            if (componentElement) {
+                info.componentName = componentElement.getAttribute('data-buildglarecomponent');
+            }
+            
+            return info;
+        } catch (error) {
+            reportError('Failed to get element info: ' + error.message);
+            return null;
+        }
+    }
+    
+    function handleMouseMove(e) {
+        try {
+            if (!isSelecting) return;
+            if (currentHighlight) {
+                currentHighlight.classList.remove('element-highlight');
+            }
+            currentHighlight = e.target;
+            e.target.classList.add('element-highlight');
+            e.preventDefault();
+            e.stopPropagation();
+        } catch (error) {
+            reportError('Mouse move error: ' + error.message);
+        }
+    }
+    
+    function handleClick(e) {
+        try {
+            if (!isSelecting) return;
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const elementInfo = getElementInfo(e.target);
+            if (elementInfo) {
+                window.parent.postMessage({
+                    type: 'ELEMENT_SELECTED',
+                    ...elementInfo
+                }, '*');
+            }
+            
+            disableElementSelector();
+        } catch (error) {
+            reportError('Click error: ' + error.message);
+        }
+    }
+    
+    function enableElementSelector() {
+        try {
+            isSelecting = true;
+            document.body.classList.add('element-selecting');
+            document.addEventListener('mousemove', handleMouseMove, true);
+            document.addEventListener('click', handleClick, true);
+        } catch (error) {
+            reportError('Failed to enable selector: ' + error.message);
+        }
+    }
+    
+    function disableElementSelector() {
+        try {
+            isSelecting = false;
+            document.removeEventListener('mousemove', handleMouseMove, true);
+            document.removeEventListener('click', handleClick, true);
+            if (currentHighlight) {
+                currentHighlight.classList.remove('element-highlight');
+                currentHighlight = null;
+            }
+            document.body.classList.remove('element-selecting');
+        } catch (error) {
+            reportError('Failed to disable selector: ' + error.message);
+        }
+    }
+    
+    // listen for messages from parent window
+    window.addEventListener('message', function(event) {
+        try {
+            if (event.data.type === 'START_ELEMENT_SELECTOR') {
+                enableElementSelector();
+            } else if (event.data.type === 'STOP_ELEMENT_SELECTOR') {
+                disableElementSelector();
+            } else if (event.data.type === 'CHECK_READY') {
+                window.parent.postMessage({
+                    type: 'CHECK_READY_RESPONSE',
+                    isReady: document.readyState === 'complete',
+                    url: window.location.href
+                }, '*');
+            }
+        } catch (error) {
+            reportError('Message handling error: ' + error.message);
+        }
+    });
+    
+    // notify parent window that the iframe is ready
+    window.addEventListener('load', notifyReady);
+    window.addEventListener('hashchange', notifyReady);
+    window.addEventListener('popstate', notifyReady);
+    
+    // check if the iframe is ready and notify parent window
+    if (document.readyState === 'complete') {
+        notifyReady();
+    }
 
-// 监听滚动事件
-document.addEventListener('scroll', handleScroll, true);
-window.addEventListener('scroll', handleScroll, true);
+    // 创建组件提示工具 DOM
+    let tooltip = document.createElement('div');
+    tooltip.className = 'component-tooltip';
+    tooltip.style.display = 'none';
+    document.body.appendChild(tooltip);
 
-// 监听窗口大小改变事件
-window.addEventListener('resize', handleScroll);
+    // 用于跟踪当前高亮的元素
+    let currentComponentHighlight = null;
+
+    // 处理鼠标移动
+    const handleComponentMouseMove = (e) => {
+        if (isSelecting) return; // 如果正在使用元素选择器，不显示组件提示
+
+        let target = e.target;
+        
+        // 移除当前高亮
+        if (currentComponentHighlight) {
+            currentComponentHighlight.classList.remove('component-highlight');
+            currentComponentHighlight = null;
+        }
+        
+        // 查找最近的带有 data-buildglarecomponent 属性的祖先元素
+        while (target && target !== document.body) {
+            if (target.hasAttribute('data-buildglarecomponent')) {
+                // 添加高亮效果
+                target.classList.add('component-highlight');
+                currentComponentHighlight = target;
+                
+                // 更新提示工具位置和内容
+                tooltip.style.display = 'block';
+                
+                // 计算位置，确保提示框不会超出视口
+                const rect = target.getBoundingClientRect();
+                const tooltipX = Math.min(
+                    e.clientX + 10, 
+                    window.innerWidth - tooltip.offsetWidth - 10
+                );
+                const tooltipY = Math.min(
+                    e.clientY + 10, 
+                    window.innerHeight - tooltip.offsetHeight - 10
+                );
+                
+                tooltip.style.left = tooltipX + 'px';
+                tooltip.style.top = tooltipY + 'px';
+                tooltip.textContent = 'This is ' + target.getAttribute('data-buildglarecomponent') + ' component';
+                return;
+            }
+            target = target.parentElement;
+        }
+        
+        // 如果没有找到组件，隐藏提示工具
+        tooltip.style.display = 'none';
+    };
+
+    // 监听鼠标移动事件
+    document.addEventListener('mousemove', handleComponentMouseMove);
+
+    // 处理滚动事件
+    const handleScroll = () => {
+        tooltip.style.display = 'none';
+        if (currentComponentHighlight) {
+            currentComponentHighlight.classList.remove('component-highlight');
+            currentComponentHighlight = null;
+        }
+    };
+
+    // 监听滚动事件
+    document.addEventListener('scroll', handleScroll, true);
+    window.addEventListener('scroll', handleScroll, true);
+
+    // 监听窗口大小改变事件
+    window.addEventListener('resize', handleScroll);
 </script>
-  <style>
-    @keyframes gradient {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
-    }
-    .animate-gradient {
-      background-size: 200% 200%;
-      animation: gradient 15s ease infinite;
-    }
-  </style>
+     
 
-  <script>
-    // Check if banner should be hidden
-    if (localStorage.getItem('hideDevWarning') === 'true') {
-      document.getElementById('dev-warning-banner').style.display = 'none';
-    }
+        <style>
+          @keyframes gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+          }
+          .animate-gradient {
+            background-size: 200% 200%;
+            animation: gradient 15s ease infinite;
+          }
+        </style>
 
-    function closeBanner() {
-      const banner = document.getElementById('dev-warning-banner');
-      const checkbox = document.getElementById('dev-warning-checkbox');
+        <script>
+          // Check if banner should be hidden
+          if (localStorage.getItem('hideDevWarning') === 'true') {
+            document.getElementById('dev-warning-banner').style.display = 'none';
+          }
+
+          function closeBanner() {
+            const banner = document.getElementById('dev-warning-banner');
+            const checkbox = document.getElementById('dev-warning-checkbox');
+            
+            if (checkbox.checked) {
+              localStorage.setItem('hideDevWarning', 'true');
+            }
+            
+            banner.style.opacity = '0';
+            banner.style.transform = 'translateY(-100%)';
+            banner.style.transition = 'all 0.3s ease-out';
+            
+            setTimeout(() => {
+              banner.style.display = 'none';
+            }, 300);
+          }
+        </script>
+      </div>
       
-      if (checkbox.checked) {
-        localStorage.setItem('hideDevWarning', 'true');
-      }
-      
-      banner.style.opacity = '0';
-      banner.style.transform = 'translateY(-100%)';
-      banner.style.transition = 'all 0.3s ease-out';
-      
-      setTimeout(() => {
-        banner.style.display = 'none';
-      }, 300);
-    }
-  </script>
-</div>
 </body>
-</html>
+      </html>
+    
